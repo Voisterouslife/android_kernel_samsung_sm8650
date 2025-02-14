@@ -4,7 +4,7 @@ TARGET_DEFCONFIG=${1:-pineapple_gki_defconfig}
 
 cd "$(dirname "$0")"
 
-LOCALVERSION=-Kokuban-android14-11-Elysia
+LOCALVERSION=-Kokuban-android14-11-Elysia-`cat include/config/kernel.release`
 
 if [ "$LTO" == "thin" ]; then
   LOCALVERSION+="-thin"
