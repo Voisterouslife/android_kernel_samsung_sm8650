@@ -40,7 +40,7 @@ if [ ! -d AnyKernel3 ]; then
   git clone --depth=1 https://github.com/YuzakiKokuban/AnyKernel3.git -b pineapple
 fi
 cp arch/arm64/boot/Image AnyKernel3/zImage
-name=${TARGET_DEFCONFIG%%_defconfig}_kernel_`cat include/config/kernel.release`_`date '+%Y_%m_%d'`
+name=S24_${TARGET_DEFCONFIG%%_defconfig}_kernel_`cat include/config/kernel.release`_`date '+%Y_%m_%d'`
 cd AnyKernel3
 zip -r ${name}.zip * -x *.zip
 echo "AnyKernel3 package output to $(realpath $name).zip"
