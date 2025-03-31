@@ -1,3 +1,4 @@
+# Kernel Build Download Link https://nas.kokuban.su:5001/d/s/1255bNlz2tWGo05pyOlbua5z6k5832nu/Wb9vycxUzPwISzTNbPF_q5gCTVAhU-Uw-xrUABDczDAw
 # How do I submit patches to Android Common Kernels
 
 1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
