@@ -1,5 +1,5 @@
 set -e
-TOOLCHAIN=$(realpath "/home/kokuban/PlentyofToolchain/toolchainS24/prebuilts/")
+TOOLCHAIN=$(realpath "/home/kokuban/PlentyofToolchain/toolchainS24/prebuilts")
 
 export PATH=$TOOLCHAIN/build-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
