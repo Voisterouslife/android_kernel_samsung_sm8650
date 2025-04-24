@@ -1407,9 +1407,9 @@ static int usb_suspend_both(struct usb_device *udev, pm_message_t msg)
 			udev->state == USB_STATE_SUSPENDED)
 		goto done;
 
-	trace_android_vh_usb_dev_suspend(udev, msg, &bypass);
+	trace_android_rvh_usb_dev_suspend(udev, msg, &bypass);
 	if (bypass)
-		goto done;		
+		goto done;
 
 	/* Suspend all the interfaces and then udev itself */
 	if (udev->actconfig) {
@@ -1507,16 +1507,17 @@ static int usb_resume_both(struct usb_device *udev, pm_message_t msg)
 	int			status = 0;
 	int			i;
 	struct usb_interface	*intf;
-	int			bypass = 0;	
+	int			bypass = 0;
 
 	if (udev->state == USB_STATE_NOTATTACHED) {
 		status = -ENODEV;
 		goto done;
 	}
+
 	trace_android_vh_usb_dev_resume(udev, msg, &bypass);
 	if (bypass)
 		goto done;
-			
+
 	udev->can_submit = 1;
 
 	/* Resume the device */

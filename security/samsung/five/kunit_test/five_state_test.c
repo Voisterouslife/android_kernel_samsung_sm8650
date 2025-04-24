@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Samsung Electronics Co., Ltd. All Rights Reserved
  *
@@ -5,6 +6,7 @@
  * under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation.
  */
+
 #include <linux/task_integrity.h>
 #include "five_cache.h"
 #include "five_state.h"
@@ -537,14 +539,10 @@ static void five_state_proceed_set_first_state_returns_intg_none_test(
 static void five_state_proceed_set_next_state_returns_intg_none_test(
 	struct kunit *test)
 {
-	char pathname[] = "yyy";
 	char comm[TASK_COMM_LEN] = "zzz";
-	char dsms_msg[MESSAGE_BUFFER_SIZE] = "bbb";
 	DECLARE_NEW(test, struct task_integrity, intg);
 	DECLARE_NEW(test, struct integrity_iint_cache, iint);
 	DECLARE_NEW(test, struct file_verification_result, file_result);
-	int msg_size = snprintf(dsms_msg, MESSAGE_BUFFER_SIZE, "%s|%d|%s",
-		comm, STATE_CAUSE_TAMPERED, kbasename(pathname));
 
 	task_integrity_set(intg, INTEGRITY_NONE);
 	intg->reset_cause = CAUSE_UNSET;
@@ -575,16 +573,6 @@ static void five_state_proceed_set_next_state_returns_intg_none_test(
 		any(test), any(test), any(test),
 		int_eq(test, file_result->five_result))),
 		ptr_return(test, 0));
-
-	KunitReturns(KUNIT_EXPECT_CALL(five_d_path(
-		ptr_eq(test, &file_result->file->f_path),
-		any(test), any(test))),
-		ptr_return(test, pathname));
-
-	KunitReturns(KUNIT_EXPECT_CALL(call_crc16(
-		int_eq(test, 0), streq(test, dsms_msg),
-		int_eq(test, msg_size))),
-		u32_return(test, CRC_VALUE_NO_MATTER));
 
 	five_state_proceed(intg, file_result);
 

@@ -1,8 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2020 Samsung Electronics Co., Ltd. All Rights Reserved
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation.
+ */
+
 #include <kunit/test.h>
 #include <crypto/hash_info.h>
 #include "five_cert.h"
 
-const static uint8_t hdr[] = {0x01, 0x02, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t hdr[] = {0x01, 0x02, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00};
 static uint8_t hsh[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 			0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 			0x10, 0x11, 0x12, 0x13};
@@ -13,7 +22,7 @@ static uint8_t cert_data[sizeof(hdr) + sizeof(hsh) + sizeof(lbl) +
 			 + sizeof(struct lv) * 3] = {0};
 static uint8_t cert_data_signed[sizeof(hdr) + sizeof(hsh) + sizeof(lbl) +
 			 sizeof(sgn) + sizeof(struct lv) * 4] = {0};
-const static uint8_t cert_hash[] = {0xae, 0x72, 0xc3, 0xd6,
+static const uint8_t cert_hash[] = {0xae, 0x72, 0xc3, 0xd6,
 			0x7e, 0x47, 0x20, 0x7a, 0xec, 0xdb, 0xd5, 0x90,
 			0xcb, 0xd2, 0xe4, 0xbe, 0x92, 0x43, 0xf2, 0x46};
 

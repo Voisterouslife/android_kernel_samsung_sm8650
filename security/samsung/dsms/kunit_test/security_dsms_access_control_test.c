@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Samsung Electronics Co., Ltd. All Rights Reserved
  *
@@ -67,8 +68,8 @@ static void security_dsms_find_policy_entry_failure_test(struct kunit *test)
  */
 static void security_dsms_policy_size_valid_value_test(struct kunit *test)
 {
-	KUNIT_EXPECT_LT(test, (unsigned long)0, dsms_policy_size());
-	KUNIT_EXPECT_GT(test, (unsigned long)10, dsms_policy_size());
+	KUNIT_EXPECT_LT(test, 0UL, dsms_policy_size());
+	KUNIT_EXPECT_GT(test, 10UL, dsms_policy_size());
 }
 
 /* ------------------------------------------------------------------------- */
@@ -117,7 +118,7 @@ static void security_dsms_should_ignore_allowlist_suffix_test(struct kunit *test
 
 	result = should_ignore_allowlist_suffix();
 	result &= ~1UL;
-	KUNIT_EXPECT_EQ(test, (unsigned int)0UL, result);
+	KUNIT_EXPECT_EQ(test, 0U, result);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -139,3 +140,5 @@ static struct kunit_suite security_dsms_access_control_test_module = {
 	.test_cases = security_dsms_access_control_test_cases,
 };
 kunit_test_suites(&security_dsms_access_control_test_module);
+
+MODULE_LICENSE("GPL v2");

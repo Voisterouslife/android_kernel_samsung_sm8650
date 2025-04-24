@@ -51,22 +51,21 @@ STATIC struct skb_tracer *skb_tracer_alloc(void)
 	return new;
 }
 
-static bool is_propper_sk(const struct sock *sk)
-{
-	if (!sk || sk->sk_state == TCP_NEW_SYN_RECV ||
-	    sk->sk_state == TCP_LISTEN) {
-		return false;
-	}
-
-	return true;
-}
-
-void skb_tracer_func_trace(const struct sock *sk,
+void skb_tracer_func_trace(const struct sock *const_sk,
 		struct sk_buff *skb, enum skb_tracer_location location)
 {
 	struct skb_tracer *tracer;
+	struct sock *sk = (struct sock *)const_sk;
 
-	if (!is_propper_sk(sk) || sk->sk_tracer_mask == 0)
+	if (!sk || !skb || sk->sk_protocol != IPPROTO_TCP)
+		return;
+
+	if (sk->sk_state == TCP_NEW_SYN_RECV) {
+		struct request_sock *req = inet_reqsk(sk);
+		sk = req->rsk_listener;
+	}
+
+	if (sk->sk_tracer_mask == 0)
 		return;
 
 	tracer = (struct skb_tracer *)skb->tracer_obj;
@@ -124,14 +123,14 @@ STATIC void MOCKABLE(print_sock_info)(struct sock *sk, struct task_struct *task)
 	struct socket *sock = sk->sk_socket;
 	struct inet_sock *inet = inet_sk(sk);
 
-	if (!sock || !sock->file || !sock->file->f_inode)
+	if (!sock || !sock->file || !sock->file->f_inode) {
+		WARN_RATELIMIT(1, "wrong called\n");
 		return;
+	}
 
-	pr_info("sk(fd:%d) on %s(pid=%d, uid=%d, gid=%d) port(s:%d, d:%d) "
+	pr_info("sk(fd:%d) on %s port(s:%d, d:%d) "
 		"by 0x%llx\n",
-			fd_from_sk(sk, task),
-			task->comm, task->pid, sock->file->f_inode->i_uid.val,
-			sock->file->f_inode->i_gid.val,
+			fd_from_sk(sk, task), task->comm,
 			ntohs(inet->inet_sport), ntohs(inet->inet_dport),
 			sk->sk_tracer_mask);
 }
@@ -141,11 +140,11 @@ STATIC void MOCKABLE(skb_tracer_err_report)(struct sock *sk)
 	struct skb_queue_printer skb_q_printer;
 	struct rb_queue_printer rb_q_printer;
 
-	skb_queue_printer_init(&skb_q_printer, sk);
 	rb_queue_printer_init(&rb_q_printer, sk);
+	skb_queue_printer_init(&skb_q_printer, sk);
 
-	sock_queue_printer_print((struct sock_queue_printer *)&skb_q_printer);
 	sock_queue_printer_print((struct sock_queue_printer *)&rb_q_printer);
+	sock_queue_printer_print((struct sock_queue_printer *)&skb_q_printer);
 }
 
 STATIC void sk_error_report_callback(void *ignore, const struct sock *err_sk)
@@ -165,13 +164,16 @@ STATIC int skb_tracer_uid_filter;
 module_param_named(uid_filter, skb_tracer_uid_filter, uint, 0660);
 MODULE_PARM_DESC(uid_filter, "uid filter");
 
+/* skb_tracer_init() is invoked when accept() and tcp_connect()
+ * for passive and active tcp connection.
+ */
 void skb_tracer_init(struct sock *sk)
 {
 	pid_t pid;
 	struct task_struct *task;
 	struct inet_sock *inet = inet_sk(sk);
 
-	if (!sk->sk_socket)
+	if (sk->sk_protocol != IPPROTO_TCP)
 		return;
 
 	task = current;
