@@ -7,6 +7,8 @@ export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r510928/bin:$PATH
 export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
 
+echo $PATH
+
 TARGET_DEFCONFIG=${1:-pineapple_gki_defconfig}
 
 cd "$(dirname "$0")"
