@@ -1,3 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Copyright (c) 2024 Samsung Electronics Co., Ltd
+ *		http://www.samsung.com
+ *
+ */
 #ifndef KZT_COMMON_H
 #define KZT_COMMON_H
 
@@ -112,6 +118,7 @@ enum kzt_timespec64_interests {
 
 enum kzt_sock_interests {
 	SK_TYPE_OF_SOCK,
+	SK_UID_OF_SOCK,
 	NUM_OF_SOCK_INTERESTS,
 	VERSION_OF_SOCK_INTERESTS = 1,
 };
@@ -160,11 +167,11 @@ struct sock_offsets {
 	u32 offsets[NUM_OF_SOCK_INTERESTS];
 };
 
-typedef struct kzt_get_version_arg {
+struct kzt_get_version_arg {
 	u32 version;
-} __attribute__((__packed__)) kzt_get_version_arg_t;
+} __packed;
 
-typedef struct kzt_get_offsets_arg {
+struct kzt_get_offsets_arg {
 	enum kzt_struct_type type;
 	u32 version;
 	union {
@@ -180,9 +187,9 @@ typedef struct kzt_get_offsets_arg {
 		struct timespec64_offsets timespec64_;
 		struct sock_offsets sock_;
 	};
-} __attribute__((__packed__)) kzt_get_offsets_arg_t;
+} __packed;
 
-#define KZT_IOCTL_GET_VERSION    _IOR('k', 0x01, kzt_get_version_arg_t)
-#define KZT_IOCTL_GET_OFFSETS    _IOWR('k', 0x02, kzt_get_offsets_arg_t)
+#define KZT_IOCTL_GET_VERSION    _IOR('k', 0x01, struct kzt_get_version_arg)
+#define KZT_IOCTL_GET_OFFSETS    _IOWR('k', 0x02, struct kzt_get_offsets_arg)
 
 #endif /* End of KZT_COMMON_H */

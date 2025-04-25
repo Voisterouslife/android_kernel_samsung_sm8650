@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2020 Samsung Electronics Co., Ltd. All Rights Reserved
  *
@@ -111,3 +112,5 @@ static struct kunit_suite security_dsms_kernel_api_module = {
 	.test_cases = security_dsms_kernel_api_test_cases,
 };
 kunit_test_suites(&security_dsms_kernel_api_module);
+
+MODULE_LICENSE("GPL v2");

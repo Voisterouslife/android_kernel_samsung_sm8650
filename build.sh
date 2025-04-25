@@ -1,10 +1,23 @@
+#!/bin/bash
+
 set -e
+
+# download toolchain from https://opensource.samsung.com/uploadSearch?searchValue=toolchain 
+TOOLCHAIN=$(realpath "/home/kokuban/PlentyofToolchain/toolchainS24/prebuilts")
+
+export PATH=$TOOLCHAIN/build-tools/linux-x86/bin:$PATH
+export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
+export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
+export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
+export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+
+echo $PATH
 
 TARGET_DEFCONFIG=${1:-pineapple_gki_defconfig}
 
 cd "$(dirname "$0")"
 
-LOCALVERSION=-android14-Kokuban-Elysia-AYB6-MKSU
+LOCALVERSION=-android14-Kokuban-Elysia-BYD9-MKSU
 
 if [ "$LTO" == "thin" ]; then
   LOCALVERSION+="-thin"
