@@ -10,6 +10,8 @@ export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
 export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r510928/bin:$PATH
 export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+
 
 LLD_COMPILER_RT="-fuse-ld=lld --rtlib=compiler-rt"
 
