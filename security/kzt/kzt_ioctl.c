@@ -1,7 +1,12 @@
-
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2024 Samsung Electronics Co., Ltd
+ *		http://www.samsung.com
+ *
+ */
 #include <linux/errno.h>
 
-#include "kzt.h"
+#include "kzt_main.h"
 #include "kzt_common.h"
 
 static long kzt_ioctl_get_version(struct file *filp, void __user *uarg)

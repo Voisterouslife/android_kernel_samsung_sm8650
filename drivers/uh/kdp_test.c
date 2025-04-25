@@ -83,7 +83,7 @@ static bool hyp_check_page_ro(u64 va)
 static int test_case_kdp_ro(int cmd_id)
 {
 	struct task_struct *p = NULL;
-	u64 ro = 0, rw = 0, dst;
+	u64 ro = 0, rw = 0, dst = 0;
 
 	for_each_process(p) {
 		switch (cmd_id) {

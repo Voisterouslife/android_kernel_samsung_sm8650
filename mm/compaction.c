@@ -1312,7 +1312,7 @@ static bool suitable_migration_target(struct compact_control *cc,
 	}
 
 	mt = get_pageblock_migratetype(page);
-	if (mt == MIGRATE_CMA || mt == MIGRATE_ISOLATE)
+	if (is_migrate_cma(mt) || is_migrate_isolate(mt))
 		return false;
 
 	if (cc->ignore_block_suitable)
@@ -1382,6 +1382,7 @@ fast_isolate_around(struct compact_control *cc, unsigned long pfn)
 {
 	unsigned long start_pfn, end_pfn;
 	struct page *page;
+	int mt;
 
 	/* Do not search around if there are enough pages already */
 	if (cc->nr_freepages >= cc->nr_migratepages)
@@ -1397,6 +1398,10 @@ fast_isolate_around(struct compact_control *cc, unsigned long pfn)
 
 	page = pageblock_pfn_to_page(start_pfn, end_pfn, cc->zone);
 	if (!page)
+		return;
+
+	mt = get_pageblock_migratetype(page);
+	if (is_migrate_cma(mt) || is_migrate_isolate(mt))
 		return;
 
 	isolate_freepages_block(cc, &start_pfn, end_pfn, &cc->freepages, 1, false);
@@ -2607,16 +2612,11 @@ enum compact_result try_to_compact_pages(gfp_t gfp_mask, unsigned int order,
 		unsigned int alloc_flags, const struct alloc_context *ac,
 		enum compact_priority prio, struct page **capture)
 {
-	int may_perform_io = (__force int)(gfp_mask & __GFP_IO);
 	struct zoneref *z;
 	struct zone *zone;
 	enum compact_result rc = COMPACT_SKIPPED;
 
-	/*
-	 * Check if the GFP flags allow compaction - GFP_NOIO is really
-	 * tricky context because the migration might require IO
-	 */
-	if (!may_perform_io)
+	if (!gfp_compaction_allowed(gfp_mask))
 		return COMPACT_SKIPPED;
 
 	trace_mm_compaction_try_to_compact_pages(order, gfp_mask, prio);
@@ -3094,6 +3094,7 @@ static int kcompactd_cpu_online(unsigned int cpu)
 			if (pgdat->kcompactd)
 				set_cpus_allowed_ptr(pgdat->kcompactd, mask);
 	}
+	trace_android_vh_mm_kcompactd_cpu_online(cpu);
 	return 0;
 }
 
