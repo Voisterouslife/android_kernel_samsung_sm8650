@@ -1,3 +1,75 @@
+# Kokuban 内核适用于三星 Galaxy S24 系列（SM-S921X / S926X / S928X）
+
+基于三星官方开源版本构建的 Galaxy S24 系列自定义内核。  
+支持 One UI 7.0 稳定版和 KernelSU 集成。
+
+---
+
+## 📌 主要特性
+
+- **基础：** 三星官方开源内核
+- **One UI 支持：** 完全兼容 One UI 7.0 稳定版
+- **KernelSU 兼容性：** 支持 KernelSU LKM 模式及更多
+- **版本格式：**  
+  `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
+
+---
+
+## 🧩 可用版本
+
+- **LKM**  
+  - 未内置 KernelSU  
+  - 移除部分三星安全策略  
+  - 需要通过 KernelSU 管理器手动修补 `init_boot`
+
+- **KSU**  
+  - 内置 KernelSU 1.0.5
+
+- **MKSU**  
+  - 内置 KernelSU 提交版本 `5ec1cff`  
+  - 支持 Magic Mount
+
+- **SukiSUU**  
+  - 内置 SukiSU-Ultra  
+  - 支持 KPM 模块和 SUSFS 1.5.7
+
+---
+
+## ⚙️ 安装指南
+
+1. 使用 TWRP 刷入提供的 AnyKernel3 包。
+2. 备份您的 `init_boot` 分区，并使用 KernelSU 进行修补。
+3. 将修补后的 `init_boot` 刷回设备。
+4. 重启并享受！
+
+*注意：可能也兼容 Z Fold6 / Z Flip6（尚未测试）。*
+
+---
+
+## 📥 下载链接
+
+- [发布页面](https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases)
+
+---
+
+## 🧾 源码链接
+
+- [三星开源中心](https://opensource.samsung.com/uploadSearch)
+- [GitHub 内核源码](https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650)
+
+---
+
+## ⚠️ 免责声明
+
+- 刷入操作需自行承担风险。
+- 对于设备的任何损坏，作者概不负责。
+- 在刷入自定义内核前，请务必备份数据。
+
+---
+
+感谢您的支持！  
+如果您觉得这个项目有帮助，欢迎为仓库点个星！
+
 # Kokuban Kernel for Samsung Galaxy S24 Series (SM-S921X / S926X / S928X)
 
 Custom kernel for the Samsung Galaxy S24 series, built from Samsung's official open-source release.  
