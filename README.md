@@ -1,3 +1,74 @@
+# Kokuban Kernel for Samsung Galaxy S24 Series (SM-S921X / S926X / S928X)
+
+Custom kernel for the Samsung Galaxy S24 series, built from Samsung's official open-source release.  
+Supports One UI 7.0 Stable and KernelSU integration.
+
+---
+
+## 📌 Highlights
+
+- **Base:** Samsung's open-source kernel
+- **One UI Support:** Fully compatible with One UI 7.0 Stable
+- **KernelSU Compatibility:** Supports KernelSU LKM mode and more
+- **Version Format:**  
+  `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
+
+---
+
+## 🧩 Available Variants
+
+- **LKM**  
+  - No built-in KernelSU  
+  - Some Samsung security policies removed  
+  - Requires manual patching of `init_boot` via KernelSU Manager
+
+- **KSU**  
+  - Built-in KernelSU 1.0.5
+
+- **MKSU**  
+  - Built-in KernelSU commit `5ec1cff`  
+  - Supports Magic Mount
+
+- **SukiSUU**  
+  - Built-in SukiSU-Ultra  
+  - Supports KPM modules and SUSFS 1.5.7
+
+---
+
+## ⚙️ Installation Guide
+
+1. Flash the provided AnyKernel3 package using TWRP.
+2. Backup your `init_boot` partition and patch it with KernelSU.
+3. Flash the patched `init_boot` back to your device.
+4. Reboot and enjoy!
+
+*Note: May also be compatible with Z Fold6 / Z Flip6 (not yet tested).*
+
+---
+
+## 📥 Downloads
+
+- [Releases](https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases)
+
+---
+
+## 🧾 Sources
+
+- [Samsung Open Source Center](https://opensource.samsung.com/uploadSearch)
+- [Kernel Source on GitHub](https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650)
+
+---
+
+## ⚠️ Disclaimer
+
+- Flash at your own risk.
+- I am not responsible for any damage to your device.
+- Always make backups before flashing custom kernels.
+
+---
+
+Thank you for your support!  
+If you find this project helpful, feel free to star the repository!
 # How do I submit patches to Android Common Kernels
 
 1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
