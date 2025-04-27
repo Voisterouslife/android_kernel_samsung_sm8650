@@ -26,7 +26,7 @@
   - 内置 KernelSU 1.0.5
 
 - **MKSU**  
-  - 内置 KernelSU 提交版本 `5ec1cff`  
+  - 内置 KernelSU 来自 `5ec1cff`  
   - 支持 Magic Mount
 
 - **SukiSUU**  
@@ -98,7 +98,7 @@ Supports One UI 7.0 Stable and KernelSU integration.
   - Built-in KernelSU 1.0.5
 
 - **MKSU**  
-  - Built-in KernelSU commit `5ec1cff`  
+  - Built-in KernelSU `5ec1cff`  
   - Supports Magic Mount
 
 - **SukiSUU**  
