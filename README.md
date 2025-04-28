@@ -76,7 +76,9 @@
 
 KernelSU-Next 不是 KernelSU 官方开发的，也不是官方认可的改进版，  
 而且它的开发者有一些很让人摸不着头脑的操作……  
+
 [岁月史书](https://web.archive.org/web/20250211155215/https://github.com/rifsxd/KernelSU-Next/issues/145)
+
 如果你想要类似功能的话，拜托用 **SukiSU** 好不好嘛～  
 它更稳定，也更值得信赖！
 
@@ -172,7 +174,9 @@ Supports One UI 7.0 Stable and KernelSU integration.
 
 KernelSU-Next is NOT developed by the official KernelSU team, nor is it an officially endorsed improvement.  
 Also, its developer has done some really confusing and questionable things...
+
 [Some Records](https://web.archive.org/web/20250211155215/https://github.com/rifsxd/KernelSU-Next/issues/145)
+
 If you need similar functionality, please use **SukiSU**, okay?  
 It's much more stable and trustworthy!
 
