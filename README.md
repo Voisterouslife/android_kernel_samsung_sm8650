@@ -67,6 +67,28 @@
 
 ---
 
+# 🥺 小小拜托 
+
+---
+
+## 求求你了，不要拿这个内核去适配 KernelSU-Next 啦～  
+😭😭😭
+
+KernelSU-Next 不是 KernelSU 官方开发的，也不是官方认可的改进版，  
+而且它的开发者有一些很让人摸不着头脑的操作……  
+
+如果你想要类似功能的话，拜托用 **SukiSU** 好不好嘛～  
+它更稳定，也更值得信赖！
+
+---
+
+## 如果你还是坚持要适配 KernelSU-Next……  
+我真的会呜呜呜哭出来的！！！  
+(｡•́︿•̀｡)  
+拜托啦～谢谢谢谢！
+
+---
+
 感谢您的支持！  
 如果您觉得这个项目有帮助，欢迎为仓库点个星！
 
@@ -136,6 +158,28 @@ Supports One UI 7.0 Stable and KernelSU integration.
 - Flash at your own risk.
 - I am not responsible for any damage to your device.
 - Always make backups before flashing custom kernels.
+
+---
+
+# 🥺 A Little Request
+
+---
+
+## Please, please don't use this kernel for adapting KernelSU-Next~  
+😭😭😭
+
+KernelSU-Next is NOT developed by the official KernelSU team, nor is it an officially endorsed improvement.  
+Also, its developer has done some really confusing and questionable things...
+
+If you need similar functionality, please use **SukiSU**, okay?  
+It's much more stable and trustworthy!
+
+---
+
+## If you still insist on adapting it to KernelSU-Next...  
+I might actually burst into tears!!!  
+(｡•́︿•̀｡)  
+Pleaseee~ Thank you so much!
 
 ---
 
