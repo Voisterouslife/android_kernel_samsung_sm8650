@@ -92,6 +92,8 @@ KernelSU-Next 不是 KernelSU 官方开发的，也不是官方认可的改进�
 感谢您的支持！  
 如果您觉得这个项目有帮助，欢迎为仓库点个星！
 
+---
+
 # Kokuban Kernel for Samsung Galaxy S24 Series (SM-S921X / S926X / S928X)
 
 Custom kernel for the Samsung Galaxy S24 series, built from Samsung's official open-source release.  
@@ -185,6 +187,9 @@ Pleaseee~ Thank you so much!
 
 Thank you for your support!  
 If you find this project helpful, feel free to star the repository!
+
+---
+
 # How do I submit patches to Android Common Kernels
 
 1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
