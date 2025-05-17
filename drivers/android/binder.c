@@ -76,6 +76,9 @@
 
 #include "binder_internal.h"
 #include "binder_trace.h"
+#ifdef CONFIG_SAMSUNG_BINDER_MONITOR
+#include <linux/monitor.h>
+#endif
 #ifdef CONFIG_SAMSUNG_FREECESS
 #include <linux/freecess.h>
 #endif
@@ -3443,6 +3446,9 @@ static void binder_transaction(struct binder_proc *proc,
 			goto err_invalid_target_handle;
 		}
 		trace_android_vh_binder_trans(target_proc, proc, thread, tr);
+#ifdef CONFIG_SAMSUNG_BINDER_MONITOR
+		binder_monitor(proc->pid,thread->pid,tr->code,target_proc->pid);
+#endif
 #ifdef CONFIG_SAMSUNG_FREECESS
 		freecess_sync_binder_report(proc, target_proc, tr);
 #endif
