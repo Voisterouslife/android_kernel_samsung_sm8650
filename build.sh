@@ -29,7 +29,8 @@ TARGET_DEFCONFIG=${1:-pineapple_gki_defconfig}
 
 cd "$(dirname "$0")"
 
-LOCALVERSION=-android14-Kokuban-Elysia-BYD9-DEV
+
+LOCALVERSION=-android14-Kokuban-Elysia-BYDA-LKM
 
 if [ "$LTO" == "thin" ]; then
   LOCALVERSION+="-thin"
@@ -67,6 +68,7 @@ fi
 cp arch/arm64/boot/Image AnyKernel3/zImage
 name=S24_ZFlip6_ZFold6_ZFold6SE_W25Flip_W25_kernel_`cat include/config/kernel.release`_`date '+%Y_%m_%d'`
 cd AnyKernel3
+rm -f patch_linux
 zip -r ${name}.zip * -x *.zip
 cd ..
 cp arch/arm64/boot/Image AnyKernel3/tools/kernel
