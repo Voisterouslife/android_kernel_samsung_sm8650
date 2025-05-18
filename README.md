@@ -10,6 +10,7 @@
 - **基础：** 三星官方开源内核
 - **One UI 支持：** 完全兼容 One UI 7.0 稳定版
 - **KernelSU 兼容性：** 支持 KernelSU LKM 模式及更多
+- **更多压缩算法：** 额外支持启用 `lz4hc`, `lz4kd`, `842`, `deflate` 等多种压缩算法，兼容性更强，适用于日志、zram 等场景
 - **版本格式：**  
   `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
 
@@ -41,8 +42,6 @@
 2. 备份您的 `init_boot` 分区，并使用 KernelSU 进行修补。
 3. 将修补后的 `init_boot` 刷回设备。
 4. 重启并享受！
-
-*注意：可能也兼容 Z Fold6 / Z Flip6（尚未测试）。*
 
 ---
 
@@ -91,6 +90,17 @@ KernelSU-Next 不是 KernelSU 官方开发的，也不是官方认可的改进�
 
 ---
 
+## ☕ 支持我
+
+如果你觉得这个项目对你有帮助，可以通过以下方式支持我：
+
+- PayPal：[https://www.paypal.me/LangQin280](https://www.paypal.me/LangQin280)  
+- 支付宝：[点击打赏](https://qr.alipay.com/fkx13433fi3skccvxkldn48)  
+- 微信：`wxp://f2f0fS_33WFG-AtCBNKiMLIvR27Z64IAQteJ3mepyvSnaQg`
+- 币安: [虚拟货币](https://app.binance.com/qr/dplk879862a9139d41469d7f3f66a059c5e9)
+
+---
+
 感谢您的支持！  
 如果您觉得这个项目有帮助，欢迎为仓库点个星！
 
@@ -108,6 +118,7 @@ Supports One UI 7.0 Stable and KernelSU integration.
 - **Base:** Samsung's open-source kernel
 - **One UI Support:** Fully compatible with One UI 7.0 Stable
 - **KernelSU Compatibility:** Supports KernelSU LKM mode and more
+- **More Compression Algorithms:** Additional support for `lz4hc`, `lz4kd`, `842`, `deflate`, and more, improving compatibility for use cases like logging and zram.
 - **Version Format:**  
   `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
 
@@ -139,8 +150,6 @@ Supports One UI 7.0 Stable and KernelSU integration.
 2. Backup your `init_boot` partition and patch it with KernelSU.
 3. Flash the patched `init_boot` back to your device.
 4. Reboot and enjoy!
-
-*Note: May also be compatible with Z Fold6 / Z Flip6 (not yet tested).*
 
 ---
 
@@ -187,6 +196,17 @@ I might actually burst into tears!!!
 (｡•́︿•̀｡)  
 Pleaseee~ Thank you so much!
 
+---
+
+## ☕ Support Me
+
+If you find this project helpful and would like to support my work, you can do so via:
+
+- PayPal: [https://www.paypal.me/LangQin280](https://www.paypal.me/LangQin280)  
+- Alipay (Mainland China): [Click to donate](https://qr.alipay.com/fkx13433fi3skccvxkldn48)  
+- WeChat (Weixin): `wxp://f2f0fS_33WFG-AtCBNKiMLIvR27Z64IAQteJ3mepyvSnaQg`
+- Binance: [Virtual currency](https://app.binance.com/qr/dplk879862a9139d41469d7f3f66a059c5e9)
+  
 ---
 
 Thank you for your support!  
