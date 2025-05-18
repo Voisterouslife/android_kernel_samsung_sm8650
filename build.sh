@@ -54,7 +54,7 @@ if [ ! -d AnyKernel3 ]; then
   git clone --depth=1 https://github.com/YuzakiKokuban/AnyKernel3.git -b pineapple
 fi
 cp arch/arm64/boot/Image AnyKernel3/zImage
-name=S24_ZFlip6_ZFold6_ZFold6SE_W25Flip_W25_kernel_`cat include/config/kernel.release`_`date '+%Y_%m_%d'`
+name=S24_kernel_`cat include/config/kernel.release`_`date '+%Y_%m_%d'`
 cd AnyKernel3
 rm -f patch_linux
 zip -r ${name}.zip * -x *.zip
