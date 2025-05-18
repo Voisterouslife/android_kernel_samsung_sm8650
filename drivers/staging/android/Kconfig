@@ -1,12 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 menu "Android"
 
-config SAMSUNG_BINDER_MONITOR
-	bool "monitor binder transaction"
-	default n
-	help
-	  monitor binder transaction and resitrict it.
-
 config ASHMEM
 	bool "Enable the Anonymous Shared Memory Subsystem"
 	depends on SHMEM
