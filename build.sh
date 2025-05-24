@@ -55,7 +55,7 @@ if [ ! -d AnyKernel3 ]; then
 fi
 cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
-chmod +x patch_linux
+chmod +x ./patch_linux
 ./patch_linux
 mv oImage zImage
 rm -f oImage
