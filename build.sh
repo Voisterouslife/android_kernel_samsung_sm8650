@@ -15,11 +15,11 @@ LOCALVERSION_BASE=-android14-Kokuban-Elysia-BYDA-SukiSUU
 
 # 3. LTO (Link Time Optimization)
 # 设置为 "full", "thin" 或 "" (留空以禁用)
-LTO="full"
+LTO=""
 
 # 4. 工具链路径
 # 指向你的 S24 工具链的 'prebuilts' 目录
-TOOLCHAIN_DIR=$(realpath "/home/kokuban/PlentyofToolchain/toolchainS24/prebuilts")
+TOOLCHAIN=$(realpath "/home/kokuban/PlentyofToolchain/toolchainS24/prebuilts")
 
 # 5. AnyKernel3 打包配置
 ANYKERNEL_REPO="https://github.com/YuzakiKokuban/AnyKernel3.git"
@@ -35,13 +35,11 @@ cd "$(dirname "$0")"
 
 # --- 环境和路径设置 (S24) ---
 echo "--- 正在设置 S24 工具链环境 ---"
-export PATH="$TOOLCHAIN_DIR/build-tools/linux-x86/bin:$PATH"
-export PATH="$TOOLCHAIN_DIR/build-tools/path/linux-x86:$PATH"
-export PATH="$TOOLCHAIN_DIR/clang/host/linux-x86/clang-r487747c/bin:$PATH"
-export PATH="$TOOLCHAIN_DIR/clang-tools/linux-x86/bin:$PATH"
-export PATH="$TOOLCHAIN_DIR/kernel-build-tools/linux-x86/bin:$PATH"
-export KBUILD_BUILD_USER="Kokuban"
-export KBUILD_BUILD_HOST="Kokuban-PC"
+export PATH=$TOOLCHAIN/build-tools/linux-x86/bin:$PATH
+export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
+export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
+export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
+export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
 
 # =============================== 核心编译参数 ===============================
 # S24 通过 make 参数直接传递版本号
@@ -154,7 +152,7 @@ cd tools
 chmod +x libmagiskboot.so
 lz4 boot.img.lz4
 ./libmagiskboot.so repack boot.img
-mv boot.img "../../${final_name}.img"
+mv new-boot.img "../../${final_name}.img"
 cd ../.. # 返回到 out 目录
 
 echo "======================================================"
