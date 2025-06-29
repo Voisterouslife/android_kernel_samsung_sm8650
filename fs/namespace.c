@@ -1233,7 +1233,7 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 {
 	struct mount *mnt;
 	struct user_namespace *fs_userns;
-	#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	struct mount *m;
 	struct mnt_namespace *mnt_ns;
 	int mnt_id;
@@ -4147,6 +4147,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
 	if (user_ns != ns->user_ns)
 		copy_flags |= CL_SHARED_TO_SLAVE;
+
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	// Always let clone_mnt() in copy_tree() know it is from copy_mnt_ns()
 	copy_flags |= CL_COPY_MNT_NS;

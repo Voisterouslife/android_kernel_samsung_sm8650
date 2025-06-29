@@ -21,6 +21,8 @@
 #define KERNEL_SU_OPTION 0xDEADBEEF
 
 #define CMD_SUSFS_ADD_SUS_PATH 0x55550
+#define CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH 0x55551
+#define CMD_SUSFS_SET_SDCARD_ROOT_PATH 0x55552
 #define CMD_SUSFS_ADD_SUS_MOUNT 0x55560
 #define CMD_SUSFS_HIDE_SUS_MNTS_FOR_ALL_PROCS 0x55561
 #define CMD_SUSFS_ADD_SUS_KSTAT 0x55570
@@ -211,7 +213,17 @@ static void print_help(void) {
 	log("    <CMD>:\n");
 	log("        add_sus_path </path/of/file_or_directory>\n");
 	log("         |--> Added path and all its sub-paths will be hidden from several syscalls\n");
-	log("         |--> Please be reminded that the target path must be added after the bind mount or overlay operation, otherwise it won't be effective\n");
+	log("         |--> Please be reminded that the target path must be added after the bind mount or overlay operation if any, otherwise it won't be effective\n");
+	log("         |--> To fix the leak of app path after /sdcard/Android/data from syscall, please run ksu_susfs set_android_data_root_path </path/of/sdcard/Android/data> first\n");
+	log("         |--> To hide paths after /sdcard/, please run ksu_susfs set_sdcard_root_path </root/dir/of/sdcard> first\n");
+	log("\n");
+	log("        set_android_data_root_path </root/dir/of/sdcard/Android/data>\n");
+	log("         |--> To fix the leak of app path after /sdcard/Android/data/ from syscall, first you need to tell the susfs kernel where is the actual path '/sdcard/Android/data' located, as it may vary on different phones\n");
+	log("         |--> Effective for no root access granted user apps only\n");
+	log("\n");
+	log("        set_sdcard_root_path </root/dir/of/sdcard>\n");
+	log("         |--> To hide paths after /sdcard/, first you need to tell the susfs kernel where is the actual path '/sdcard' located, as it may vary on different phones\n");
+	log("         |--> Warning: All no root access granted user apps cannot see any sus paths in /sdcard/ unless you grant root access for the target app\n");
 	log("\n");
 	log("        add_sus_mount <mounted_path>\n");
 	log("         |--> Added mounted path will be hidden from /proc/self/[mounts|mountinfo|mountstats]\n");
@@ -309,7 +321,7 @@ int main(int argc, char *argv[]) {
 		struct stat sb;
 
 		if (get_file_stat(argv[2], &sb)) {
-			log("%s not found, skip adding its ino\n", info.target_pathname);
+			log("path '%s' not found, skip adding its ino\n", argv[2]);
 			return 1;
 		}
 		info.target_ino = sb.st_ino;
@@ -317,6 +329,17 @@ int main(int argc, char *argv[]) {
 		strncpy(info.target_pathname, argv[2], SUSFS_MAX_LEN_PATHNAME-1);
 		prctl(KERNEL_SU_OPTION, CMD_SUSFS_ADD_SUS_PATH, &info, NULL, &error);
 		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_ADD_SUS_PATH);
+		return error;
+	
+	// set_android_data_root_path
+	} else if (argc == 3 && !strcmp(argv[1], "set_android_data_root_path")) {
+		prctl(KERNEL_SU_OPTION, CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH, argv[2], NULL, &error);
+		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH);
+		return error;
+	// set_sdcard_root_path
+	} else if (argc == 3 && !strcmp(argv[1], "set_sdcard_root_path")) {
+		prctl(KERNEL_SU_OPTION, CMD_SUSFS_SET_SDCARD_ROOT_PATH, argv[2], NULL, &error);
+		PRT_MSG_IF_OPERATION_NOT_SUPPORTED(error, CMD_SUSFS_SET_SDCARD_ROOT_PATH);
 		return error;
 	// add_sus_mount
 	} else if (argc == 3 && !strcmp(argv[1], "add_sus_mount")) {
@@ -688,51 +711,46 @@ int main(int argc, char *argv[]) {
 					ptr_buf += str_len;
 				}
 				if (enabled_features & (1 << 5)) {
-					str_len = strlen("CONFIG_KSU_SUSFS_SUS_OVERLAYFS\n");
-					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_SUS_OVERLAYFS\n", str_len);
-					ptr_buf += str_len;
-				}
-				if (enabled_features & (1 << 6)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_TRY_UMOUNT\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_TRY_UMOUNT\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 7)) {
+				if (enabled_features & (1 << 6)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 8)) {
+				if (enabled_features & (1 << 7)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_SPOOF_UNAME\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_SPOOF_UNAME\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 9)) {
+				if (enabled_features & (1 << 8)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_ENABLE_LOG\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_ENABLE_LOG\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 10)) {
+				if (enabled_features & (1 << 9)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 11)) {
+				if (enabled_features & (1 << 10)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 12)) {
+				if (enabled_features & (1 << 11)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_OPEN_REDIRECT\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_OPEN_REDIRECT\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 13)) {
+				if (enabled_features & (1 << 12)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_SUS_SU\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_SUS_SU\n", str_len);
 					ptr_buf += str_len;
 				}
-				if (enabled_features & (1 << 14)) {
+				if (enabled_features & (1 << 13)) {
 					str_len = strlen("CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT\n");
 					strncpy(ptr_buf, "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT\n", str_len);
 					ptr_buf += str_len;
