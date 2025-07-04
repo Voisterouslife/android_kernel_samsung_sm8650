@@ -10,7 +10,6 @@
 - **基础：** 三星官方开源内核
 - **One UI 支持：** 完全兼容 One UI 7.0 稳定版
 - **KernelSU 兼容性：** 支持 KernelSU LKM 模式及更多
-- **更多压缩算法：** 额外支持启用 `lz4hc`, `lz4kd`, `842`, `deflate` 等多种压缩算法，兼容性更强，适用于日志、zram 等场景
 - **版本格式：**  
   `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
 
@@ -24,7 +23,7 @@
   - 需要通过 KernelSU 管理器手动修补 `init_boot`
 
 - **KSU**  
-  - 内置 KernelSU 1.0.5
+  - 内置 KernelSU
 
 - **MKSU**  
   - 内置 KernelSU 来自 `5ec1cff`  
@@ -32,7 +31,7 @@
 
 - **SukiSUU**  
   - 内置 SukiSU-Ultra  
-  - 支持 KPM 模块和 SUSFS 1.5.7
+  - 支持 KPM 模块和 SUSFS
 
 ---
 
@@ -118,7 +117,6 @@ Supports One UI 7.0 Stable and KernelSU integration.
 - **Base:** Samsung's open-source kernel
 - **One UI Support:** Fully compatible with One UI 7.0 Stable
 - **KernelSU Compatibility:** Supports KernelSU LKM mode and more
-- **More Compression Algorithms:** Additional support for `lz4hc`, `lz4kd`, `842`, `deflate`, and more, improving compatibility for use cases like logging and zram.
 - **Version Format:**  
   `6.1.99-android14-Kokuban-Elysia-XXXX-XXX-gXXXXXXXXXX`
 
@@ -132,7 +130,7 @@ Supports One UI 7.0 Stable and KernelSU integration.
   - Requires manual patching of `init_boot` via KernelSU Manager
 
 - **KSU**  
-  - Built-in KernelSU 1.0.5
+  - Built-in KernelSU
 
 - **MKSU**  
   - Built-in KernelSU `5ec1cff`  
@@ -140,7 +138,7 @@ Supports One UI 7.0 Stable and KernelSU integration.
 
 - **SukiSUU**  
   - Built-in SukiSU-Ultra  
-  - Supports KPM modules and SUSFS 1.5.7
+  - Supports KPM modules and SUSFS
 
 ---
 
