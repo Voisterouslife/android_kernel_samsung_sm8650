@@ -30,7 +30,7 @@ GITHUB_REPO="YuzakiKokuban/android_kernel_samsung_sm8650"
 # 设置为 true 以启用自动发布
 AUTO_RELEASE=true
 # 设置为 true 以发布为 Pre-release (预发布)
-IS_PRERELEASE=true
+IS_PRERELEASE=${IS_PRERELEASE:-true}
 # 设置为 false 以跳过patch_linux
 PATCH_LINUX=false
 
