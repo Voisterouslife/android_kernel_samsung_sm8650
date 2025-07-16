@@ -34,9 +34,10 @@ jobs:
           # 更新包列表
           sudo apt-get update
           # 安装编译内核和打包所需的各种工具
+          # !! 关键修复：添加 libelf-dev 以解决编译错误 !!
           sudo apt-get install -y \
             build-essential git libncurses5-dev bc bison flex libssl-dev \
-            p7zip-full lz4 cpio curl
+            p7zip-full lz4 cpio curl libelf-dev
 
       # 第三步：下载、合并并解压 S24 工具链
       - name: Download and Extract Toolchain (S24)
@@ -59,7 +60,7 @@ jobs:
           
           echo "移动文件到正确的工具链目录..."
           mkdir -p ./toolchain
-          # !! 关键：根据你的描述，解压后是 prebuilts 目录，我们将其移动到 toolchain 目录下 !!
+          # 根据你的描述，解压后是 prebuilts 目录，我们将其移动到 toolchain 目录下
           mv ./toolchain_temp/prebuilts ./toolchain/
           
           echo "清理下载和临时文件..."
