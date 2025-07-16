@@ -8,7 +8,7 @@ set -e
 # 1. 主配置文件
 MAIN_DEFCONFIG=pineapple_gki_defconfig
 
-# 2. 内核版本标识
+# 2. 内核版本基础标识 (构建类型会自动附加)
 LOCALVERSION_BASE=-android14-Kokuban-Elysia-BYEC-SukiSUU
 
 # 3. LTO (Link Time Optimization)
@@ -31,6 +31,8 @@ GITHUB_REPO="YuzakiKokuban/android_kernel_samsung_sm8650"
 AUTO_RELEASE=true
 # 设置为 true 以发布为 Pre-release (预发布)
 IS_PRERELEASE=true
+# 设置为 false 以跳过patch_linux
+PATCH_LINUX=true
 
 
 # --- 脚本开始 ---
@@ -53,7 +55,6 @@ ARCH=arm64
 CC=clang
 LLVM=1
 LLVM_IAS=1
-LOCALVERSION=${LOCALVERSION_BASE}
 "
 # ======================================================================
 
@@ -95,7 +96,8 @@ fi
 
 # 5. 开始编译内核
 echo "--- 开始编译内核 (-j$(nproc)) ---"
-make -j$(nproc) ${MAKE_ARGS} 2>&1 | tee kernel_build_log.txt
+# 直接将版本号通过 LOCALVERSION 参数传递给 make，编译系统会自动附加 git hash
+make -j$(nproc) ${MAKE_ARGS} LOCALVERSION="${LOCALVERSION_BASE}" 2>&1 | tee kernel_build_log.txt
 BUILD_STATUS=${PIPESTATUS[0]}
 
 if [ $BUILD_STATUS -ne 0 ]; then
@@ -118,12 +120,21 @@ fi
 cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
+if [ "$PATCH_LINUX" == "false" ]; then
+    rm -f patch_linux
+fi
+
 echo "--- 正在运行 patch_linux ---"
-chmod +x ./patch_linux
-./patch_linux
-mv oImage zImage
-rm -f Image oImage patch_linux
-echo "--- patch_linux 执行完毕, 已生成 zImage ---"
+if [ ! -f "patch_linux" ]; then
+    echo "警告: 未找到 'patch_linux' 脚本，将直接使用原始 Image 作为 zImage。"
+    mv Image zImage
+else
+    chmod +x ./patch_linux
+    ./patch_linux
+    mv oImage zImage
+    rm -f Image oImage patch_linux
+    echo "--- patch_linux 执行完毕, 已生成 zImage ---"
+fi
 
 if ! command -v lz4 &> /dev/null; then
     echo "错误: 未找到 'lz4' 命令。请先安装 lz4 工具。"
@@ -141,24 +152,35 @@ final_name="${ZIP_NAME_PREFIX}_${kernel_release}_$(date '+%Y%m%d')"
 echo "--- 正在创建 Zip 刷机包: ${final_name}.zip ---"
 zip -r9 "../${final_name}.zip" . -x "*.zip"
 
-echo "--- 正在创建 boot.img: ${final_name}.img ---"
-cp zImage tools/kernel
-cd tools
-chmod +x libmagiskboot.so
-lz4 boot.img.lz4
-./libmagiskboot.so repack boot.img
-mv new-boot.img "../../${final_name}.img"
-cd ../.. # 返回到 out 目录
+ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
+UPLOAD_FILES="$ZIP_FILE_PATH"
 
-# 获取产物的绝对路径，供后续发布使用
-ZIP_FILE_PATH=$(realpath "${final_name}.zip")
-IMG_FILE_PATH=$(realpath "${final_name}.img")
+# 检查是否在 GitHub Actions 环境中 (CI=true)
+if [ "$CI" != "true" ]; then
+    echo "--- 正在创建 boot.img: ${final_name}.img ---"
+    cp zImage tools/kernel
+    cd tools
+    chmod +x libmagiskboot.so
+    lz4 boot.img.lz4
+    ./libmagiskboot.so repack boot.img
+    mv new-boot.img "../../${final_name}.img"
+    cd ../..
 
-echo "======================================================"
-echo "成功！"
-echo "刷机包输出到: ${ZIP_FILE_PATH}"
-echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
-echo "======================================================"
+    IMG_FILE_PATH=$(realpath "${final_name}.img")
+    UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
+
+    echo "======================================================"
+    echo "成功！"
+    echo "刷机包输出到: ${ZIP_FILE_PATH}"
+    echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
+    echo "======================================================"
+else
+    cd ../..
+    echo "======================================================"
+    echo "成功！ (已跳过创建 .img)"
+    echo "刷机包输出到: ${ZIP_FILE_PATH}"
+    echo "======================================================"
+fi
 
 
 # ======================================================================
@@ -181,7 +203,10 @@ if [ -z "$GH_TOKEN" ]; then
     exit 1
 fi
 
-TAG="release-$(date +%Y%m%d-%H%M%S)"
+# 从 LOCALVERSION_BASE 提取构建类型 (最后一个'-'之后的部分)
+BUILD_TYPE=${LOCALVERSION_BASE##*-}
+
+TAG="release-${BUILD_TYPE}-$(date +%Y%m%d-%H%M%S)"
 RELEASE_TITLE="新内核构建 - ${kernel_release} ($(date +'%Y-%m-%d %R'))"
 RELEASE_NOTES="由构建脚本在 $(date) 自动发布。"
 
@@ -195,16 +220,13 @@ fi
 echo "仓库: $GITHUB_REPO"
 echo "标签: $TAG"
 echo "标题: $RELEASE_TITLE"
-echo "上传文件: "
-echo "  - ${ZIP_FILE_PATH}"
-echo "  - ${IMG_FILE_PATH}"
+echo "上传文件: $UPLOAD_FILES"
 
 echo "--- 准备执行发布命令 ---"
 
 set +e
 RELEASE_OUTPUT=$(gh release create "$TAG" \
-    "$ZIP_FILE_PATH" \
-    "$IMG_FILE_PATH" \
+    $UPLOAD_FILES \
     --repo "$GITHUB_REPO" \
     --title "$RELEASE_TITLE" \
     --notes "$RELEASE_NOTES" \
