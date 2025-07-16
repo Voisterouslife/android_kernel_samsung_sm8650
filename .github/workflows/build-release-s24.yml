@@ -1,0 +1,103 @@
+# GitHub Actions Workflow 的名称
+name: Build Kernel & Release (S24)
+
+# 工作流的触发条件
+on:
+  # 允许你手动在 Actions 页面点击 "Run workflow" 来触发
+  workflow_dispatch:
+    # 添加输入字段，用于手动指定分支
+    inputs:
+      branch:
+        description: '要编译的分支名 (例如 main)'
+        required: true
+        # 默认值设为 main 分支
+        default: 'main'
+
+jobs:
+  build:
+    # 指定运行环境为最新的 Ubuntu 系统
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：检出你的仓库代码
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # 使用你手动输入的分支
+          ref: ${{ github.event.inputs.branch }}
+          # 如果你的内核源码还依赖其他子模块，可以保留此项
+          submodules: 'recursive'
+
+      # 第二步：安装所有编译所需的依赖包
+      - name: Install Dependencies
+        run: |
+          # 更新包列表
+          sudo apt-get update
+          # 安装编译内核和打包所需的各种工具
+          sudo apt-get install -y \
+            build-essential git libncurses5-dev bc bison flex libssl-dev \
+            p7zip-full lz4 cpio curl
+
+      # 第三步：下载、合并并解压 S24 工具链
+      - name: Download and Extract Toolchain (S24)
+        run: |
+          echo "开始从 GitHub Releases 下载 S24 工具链分卷..."
+          # 下载 S24 的分卷
+          wget -O toolchain.part00 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.00"
+          wget -O toolchain.part01 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.01"
+          
+          echo "合并所有分卷..."
+          # 使用 cat 命令将所有分卷合并成一个完整的 .tar.gz 文件
+          cat toolchain.part* > toolchain.tar.gz
+
+          echo "创建临时解压目录并开始解压..."
+          mkdir -p ./toolchain_temp
+          tar -xzvf toolchain.tar.gz -C ./toolchain_temp/
+          
+          echo "列出解压后的目录结构:"
+          ls -R ./toolchain_temp
+          
+          echo "移动文件到正确的工具链目录..."
+          mkdir -p ./toolchain
+          # !! 关键：根据你的描述，解压后是 prebuilts 目录，我们将其移动到 toolchain 目录下 !!
+          mv ./toolchain_temp/prebuilts ./toolchain/
+          
+          echo "清理下载和临时文件..."
+          rm toolchain.part* toolchain.tar.gz
+          rm -rf ./toolchain_temp
+          
+          echo "工具链准备完毕。"
+
+      # 第四步：根据分支设置 KernelSU
+      - name: Setup KernelSU based on branch
+        run: |
+          # 使用你手动输入的分支名
+          BRANCH_NAME="${{ github.event.inputs.branch }}"
+          echo "当前分支是: $BRANCH_NAME"
+
+          if [[ "$BRANCH_NAME" == "sukisuultra" ]]; then
+            echo "正在为 sukisuultra 分支设置 KernelSU..."
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          elif [[ "$BRANCH_NAME" == "mksu" ]]; then
+            echo "正在为 mksu 分支设置 KernelSU..."
+            curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/main/kernel/setup.sh" | bash -
+          elif [[ "$BRANCH_NAME" == "ksu" ]]; then
+            echo "正在为 ksu 分支设置 KernelSU..."
+            curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+          else
+            echo "当前分支 ($BRANCH_NAME) 不需要设置 KernelSU，跳过此步骤。"
+          fi
+          
+          echo "KernelSU 设置步骤完成。"
+
+      # 第五步：运行构建和发布脚本
+      - name: Run Build and Release Script
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "赋予构建脚本执行权限..."
+          chmod +x ./build.sh
+          
+          echo "开始执行构建和发布脚本..."
+          ./build.sh
+
