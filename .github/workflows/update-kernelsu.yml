@@ -28,6 +28,10 @@ jobs:
     # 指定运行环境
     runs-on: ubuntu-latest
 
+    # !! 关键修复：为这个任务授予写入代码的权限 !!
+    permissions:
+      contents: write
+
     steps:
       # 第一步：检出你的仓库代码
       - name: Checkout Repository
@@ -35,8 +39,7 @@ jobs:
         with:
           # 检出你手动指定的分支
           ref: ${{ github.event.inputs.branch }}
-          # 提供一个拥有推送权限的令牌，以便后续可以 push 代码
-          # GITHUB_TOKEN 是由 GitHub 自动提供的，无需手动设置
+          # GITHUB_TOKEN 是由 GitHub 自动提供的，现在它拥有了我们上面授予的写入权限
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # 第二步：根据你的选择，运行对应的 KernelSU 安装脚本
