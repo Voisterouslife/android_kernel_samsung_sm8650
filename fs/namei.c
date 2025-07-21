@@ -1638,9 +1638,6 @@ struct dentry *lookup_one_qstr_excl(const struct qstr *name,
 		if (susfs_is_base_dentry_android_data_dir(base) &&
 			susfs_is_sus_android_data_d_name_found(name->name))
 		{
-			if (flags & (LOOKUP_CREATE | LOOKUP_EXCL)) {
-				return ERR_PTR(-EACCES);
-			}
 			dentry = lookup_dcache(&susfs_fake_qstr_name, base, flags);
 			found_sus_path = true;
 			goto retry;
@@ -4081,7 +4078,7 @@ struct file *do_filp_open(int dfd, struct filename *pathname,
 	if (unlikely(filp == ERR_PTR(-ESTALE)))
 		filp = path_openat(&nd, op, flags | LOOKUP_REVAL);
 #ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
-	if (!IS_ERR(filp) && unlikely(filp->f_inode->i_state & INODE_STATE_OPEN_REDIRECT) && current_uid().val < 2000) {
+	if (!IS_ERR(filp) && unlikely(filp->f_inode->i_mapping->flags & BIT_OPEN_REDIRECT) && current_uid().val < 2000) {
 		fake_pathname = susfs_get_redirected_path(filp->f_inode->i_ino);
 		if (!IS_ERR(fake_pathname)) {
 			restore_nameidata();
