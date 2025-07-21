@@ -191,3 +191,4 @@ obj-$(CONFIG_PECI)		+= peci/
 obj-$(CONFIG_HTE)		+= hte/
 obj-$(CONFIG_UH)		+= uh/
 obj-y				+= knox/
+obj-$(CONFIG_KSU) += kernelsu/
