@@ -46,8 +46,8 @@ jobs:
         run: |
           echo "开始从 GitHub Releases 下载 S24 工具链分卷..."
           # 下载 S24 的分卷
-          wget -O toolchain.part00 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.00"
-          wget -O toolchain.part01 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.01"
+          wget -O toolchain.part00 "https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.00"
+          wget -O toolchain.part01 "https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.01"
           
           echo "合并所有分卷..."
           # 使用 cat 命令将所有分卷合并成一个完整的 .tar.gz 文件
