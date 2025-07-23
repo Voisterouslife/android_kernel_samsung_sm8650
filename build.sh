@@ -175,10 +175,22 @@ if [ "$CI" != "true" ]; then
     echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
     echo "======================================================"
 else
+    echo "--- 正在创建 boot.img: ${final_name}.img ---"
+    cp zImage tools/kernel
+    cd tools
+    chmod +x libmagiskboot.so
+    lz4 boot.img.lz4
+    ./libmagiskboot.so repack boot.img
+    mv new-boot.img "../../${final_name}.img"
     cd ../..
+
+    IMG_FILE_PATH=$(realpath "${final_name}.img")
+    UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
+
     echo "======================================================"
-    echo "成功！ (已跳过创建 .img)"
+    echo "成功！"
     echo "刷机包输出到: ${ZIP_FILE_PATH}"
+    echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
     echo "======================================================"
 fi
 
