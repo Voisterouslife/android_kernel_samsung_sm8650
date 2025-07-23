@@ -10,7 +10,7 @@ on:
       branch:
         description: '要更新并推送到的分支名'
         required: true
-        default: 'main'
+        default: 'sukisuultra'
       kernelsu_type:
         description: '选择要安装的 KernelSU 版本'
         required: true
