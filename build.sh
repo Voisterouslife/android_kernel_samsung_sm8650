@@ -9,7 +9,7 @@ set -e
 MAIN_DEFCONFIG=pineapple_gki_defconfig
 
 # 2. 内核版本基础标识 (构建类型会自动附加)
-LOCALVERSION_BASE=-android14-Kokuban-Elysia-BYEC-SukiSUU
+LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
 
 # 3. LTO (Link Time Optimization)
 LTO=""
@@ -18,7 +18,7 @@ LTO=""
 TOOLCHAIN=$(realpath "./toolchain/prebuilts")
 
 # 5. AnyKernel3 打包配置
-ANYKERNEL_REPO="https://github.com/YuzakiKokuban/AnyKernel3.git"
+ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
 ANYKERNEL_BRANCH="pineapple"
 
 # 6. 输出文件名前缀
@@ -26,11 +26,11 @@ ZIP_NAME_PREFIX="S24_kernel"
 
 # 7. GitHub Release 配置
 # !! 请将这里的用户名替换成你自己的 !!
-GITHUB_REPO="YuzakiKokuban/android_kernel_samsung_sm8650"
+GITHUB_REPO="Voisterouslife/android_kernel_samsung_sm8650"
 # 设置为 true 以启用自动发布
 AUTO_RELEASE=true
 # 设置为 true 以发布为 Pre-release (预发布)
-IS_PRERELEASE=true
+IS_PRERELEASE=${IS_PRERELEASE:-true}
 # 设置为 false 以跳过patch_linux
 PATCH_LINUX=true
 
@@ -155,33 +155,25 @@ zip -r9 "../${final_name}.zip" . -x "*.zip"
 ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
 UPLOAD_FILES="$ZIP_FILE_PATH"
 
-# 检查是否在 GitHub Actions 环境中 (CI=true)
-if [ "$CI" != "true" ]; then
-    echo "--- 正在创建 boot.img: ${final_name}.img ---"
-    cp zImage tools/kernel
-    cd tools
-    chmod +x libmagiskboot.so
-    lz4 boot.img.lz4
-    ./libmagiskboot.so repack boot.img
-    mv new-boot.img "../../${final_name}.img"
-    cd ../..
 
-    IMG_FILE_PATH=$(realpath "${final_name}.img")
-    UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
 
-    echo "======================================================"
-    echo "成功！"
-    echo "刷机包输出到: ${ZIP_FILE_PATH}"
-    echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
-    echo "======================================================"
-else
-    cd ../..
-    echo "======================================================"
-    echo "成功！ (已跳过创建 .img)"
-    echo "刷机包输出到: ${ZIP_FILE_PATH}"
-    echo "======================================================"
-fi
+echo "--- 正在创建 boot.img: ${final_name}.img ---"
+cp zImage tools/kernel
+cd tools
+chmod +x libmagiskboot.so
+lz4 boot.img.lz4
+./libmagiskboot.so repack boot.img
+mv new-boot.img "../../${final_name}.img"
+cd ../..
 
+IMG_FILE_PATH=$(realpath "${final_name}.img")
+UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
+
+echo "======================================================"
+echo "成功！"
+echo "刷机包输出到: ${ZIP_FILE_PATH}"
+echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
+echo "======================================================"
 
 # ======================================================================
 # --- 自动发布到 GitHub Release ---
