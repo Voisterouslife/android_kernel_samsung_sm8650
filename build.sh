@@ -129,6 +129,10 @@ if [ ! -f "patch_linux" ]; then
     echo "警告: 未找到 'patch_linux' 脚本，将直接使用原始 Image 作为 zImage。"
     mv Image zImage
 else
+    # 在执行 patch_linux 之前，先进行 dos2unix 转换，确保换行符正确
+    echo "--- 正在将 patch_linux 转换为 Unix 格式 ---"
+    dos2unix ./patch_linux # <-- 新增行
+
     chmod +x ./patch_linux
     ./patch_linux
     mv oImage zImage
