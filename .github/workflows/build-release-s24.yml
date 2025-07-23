@@ -51,7 +51,7 @@ jobs:
           
           echo "合并所有分卷..."
           # 使用 cat 命令将所有分卷合并成一个完整的 .tar.gz 文件
-          cat toolchainS24.tar.gz.* > toolchain.tar.gz
+          cat toolchain.part* > toolchain.tar.gz
 
           echo "创建临时解压目录并开始解压..."
           mkdir -p ./toolchain_temp
