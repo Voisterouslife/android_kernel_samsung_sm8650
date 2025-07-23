@@ -39,7 +39,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential git libncurses5-dev bc bison flex libssl-dev \
-            p7zip-full lz4 cpio curl libelf-dev dwarves dos2unix # <-- 添加 dos2unix
+            p7zip-full lz4 cpio curl libelf-dev dwarves dos2unix
 
       # 第三步：下载、合并并解压 S24 工具链
       - name: Download and Extract Toolchain (S24)
