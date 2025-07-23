@@ -129,10 +129,6 @@ if [ ! -f "patch_linux" ]; then
     echo "警告: 未找到 'patch_linux' 脚本，将直接使用原始 Image 作为 zImage。"
     mv Image zImage
 else
-    # 在执行 patch_linux 之前，先进行 dos2unix 转换，确保换行符正确
-    echo "--- 正在将 patch_linux 转换为 Unix 格式 ---"
-    dos2unix ./patch_linux # <-- 新增行
-
     chmod +x ./patch_linux
     ./patch_linux
     mv oImage zImage
@@ -179,24 +175,13 @@ if [ "$CI" != "true" ]; then
     echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
     echo "======================================================"
 else
-    echo "--- 正在创建 boot.img: ${final_name}.img ---"
-    cp zImage tools/kernel
-    cd tools
-    chmod +x libmagiskboot.so
-    lz4 boot.img.lz4
-    ./libmagiskboot.so repack boot.img
-    mv new-boot.img "../../${final_name}.img"
     cd ../..
-
-    IMG_FILE_PATH=$(realpath "${final_name}.img")
-    UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
-
     echo "======================================================"
-    echo "成功！"
+    echo "成功！ (已跳过创建 .img)"
     echo "刷机包输出到: ${ZIP_FILE_PATH}"
-    echo "Boot 镜像输出到: ${IMG_FILE_PATH}"
     echo "======================================================"
 fi
+
 
 # ======================================================================
 # --- 自动发布到 GitHub Release ---
