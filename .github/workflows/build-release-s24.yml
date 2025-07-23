@@ -39,16 +39,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential git libncurses5-dev bc bison flex libssl-dev \
-            p7zip-full lz4 cpio curl libelf-dev dwarves dos2unix
+            p7zip-full lz4 cpio curl libelf-dev dwarves
 
       # 第三步：下载、合并并解压 S24 工具链
       - name: Download and Extract Toolchain (S24)
         run: |
           echo "开始从 GitHub Releases 下载 S24 工具链分卷..."
+          # 下载 S24 的分卷
           wget -O toolchain.part00 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.00"
           wget -O toolchain.part01 "https://github.com/YuzakiKokuban/android_kernel_samsung_sm8650/releases/download/toolchain/toolchainS24.tar.gz.01"
           
           echo "合并所有分卷..."
+          # 使用 cat 命令将所有分卷合并成一个完整的 .tar.gz 文件
           cat toolchain.part* > toolchain.tar.gz
 
           echo "创建临时解压目录并开始解压..."
@@ -57,6 +59,7 @@ jobs:
           
           echo "移动文件到正确的工具链目录..."
           mkdir -p ./toolchain
+          # 根据你的描述，解压后是 prebuilts 目录，我们将其移动到 toolchain 目录下
           mv ./toolchain_temp/prebuilts ./toolchain/
           
           echo "清理下载和临时文件..."
@@ -98,15 +101,12 @@ jobs:
       - name: Run Build and Release Script
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # 将你选择的是否预发布的值，作为环境变量传递给脚本
           IS_PRERELEASE: ${{ github.event.inputs.is_prerelease }}
         run: |
           echo "赋予构建脚本执行权限..."
           chmod +x ./build.sh
           
-          echo "设置语言环境为 UTF-8..."
-          export LC_ALL=C.UTF-8
-          export LANG=C.UTF-8
-          export LANGUAGE=C.UTF-8
-          
           echo "开始执行构建和发布脚本..."
           ./build.sh
+
