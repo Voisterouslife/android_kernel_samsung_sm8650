@@ -18,9 +18,6 @@ export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
 export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
 
-export LLVM_AR=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/llvm-ar
-export LLVM_NM=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/llvm-nm
-
 MAKE_ARGS="
 O=out
 ARCH=arm64
@@ -28,16 +25,6 @@ CC=clang
 LLVM=1
 LLVM_IAS=1
 "
-
-echo "=== 调试 PATH 和编译链 ==="
-echo "PATH=$PATH"
-echo "TOOLCHAIN=$TOOLCHAIN"
-echo "--- 检查 clang/llvm 是否存在 ---"
-which clang || echo "clang not found"
-which llvm-ar || echo "llvm-ar not found"
-ls -l $TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin | grep llvm || true
-
-chmod +x $TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/* || true
 
 echo "--- 正在清理 (rm -rf out) ---"
 rm -rf out
