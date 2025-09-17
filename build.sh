@@ -1,18 +1,14 @@
 set -e
 
 MAIN_DEFCONFIG=pineapple_gki_defconfig
-
 LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
-
 LTO=""
 
 TOOLCHAIN=$(realpath "$GITHUB_WORKSPACE/prebuilts")
 
 ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
 ANYKERNEL_BRANCH="pineapple"
-
 ZIP_NAME_PREFIX="S24_kernel"
-
 
 cd "$(dirname "$0")"
 
@@ -21,6 +17,7 @@ export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
 export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
 export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+
 export LLVM_AR=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/llvm-ar
 export LLVM_NM=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/llvm-nm
 
@@ -32,10 +29,18 @@ LLVM=1
 LLVM_IAS=1
 "
 
+echo "=== 调试 PATH 和编译链 ==="
+echo "PATH=$PATH"
+echo "TOOLCHAIN=$TOOLCHAIN"
+echo "--- 检查 clang/llvm 是否存在 ---"
+which clang || echo "clang not found"
+which llvm-ar || echo "llvm-ar not found"
+ls -l $TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin | grep llvm || true
+
+chmod +x $TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin/* || true
 
 echo "--- 正在清理 (rm -rf out) ---"
 rm -rf out
-
 
 TARGET_DEFCONFIG=${1:-$MAIN_DEFCONFIG}
 echo "--- 正在应用 defconfig: $TARGET_DEFCONFIG ---"
@@ -77,12 +82,10 @@ cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
 echo "--- 正在运行 patch_linux ---"
-
 chmod +x ./patch_linux
 ./patch_linux
 mv oImage zImage
 rm -f Image oImage patch_linux
-
 echo "--- patch_linux 执行完毕, 已生成 zImage ---"
 
 kernel_release=$(cat ../include/config/kernel.release)
