@@ -17,6 +17,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld
 
+      - name: Download and install SukiSU
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          
       - name: Download and extract toolchain
         run: |
           PART1_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.00"
