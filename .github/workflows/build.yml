@@ -1,0 +1,74 @@
+
+name: Android Kernel Build and Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld
+
+      - name: Download and install SukiSU
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          
+      - name: Download and extract toolchain
+        run: |
+          PART1_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.00"
+          PART2_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.01"
+          
+          echo "--- 正在从 Release 下载编译链分卷 ---"
+          wget $PART1_URL
+          wget $PART2_URL
+          
+          # 合并所有分卷
+          cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
+          
+          # 解压打包文件
+          mkdir prebuilts
+          tar -xzf toolchain.tar.gz -C prebuilts
+          
+          echo "--- 编译链已解压到 prebuilts/ ---"
+
+      - name: Run kernel build script
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Get uploaded file path from script output
+        id: get_file_path
+        run: |
+          UPLOAD_FILE_LINE=$(grep "UPLOAD_FILES" build.sh | tail -1)
+          echo "::set-output name=file_path::${UPLOAD_FILE_LINE#*=}"
+          echo "已获取文件路径: ${{ steps.get_file_path.outputs.file_path }}"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            A new kernel release is available!
+            - Built from tag: ${{ github.ref }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.get_file_path.outputs.file_path }}
+          asset_name: ${{ github.ref }}.zip
+          asset_content_type: application/zip
