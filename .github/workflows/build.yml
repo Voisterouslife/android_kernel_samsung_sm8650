@@ -52,8 +52,8 @@ jobs:
         run: |
           export CCACHE_DIR=~/.ccache
           export CCACHE_COMPRESS=1
-          export CCACHE_MAXSIZE=2G
-          ccache -M 2G
+          export CCACHE_MAXSIZE=10G
+          ccache -M 10G
           ccache -s
 
       - name: Download and install SukiSU
