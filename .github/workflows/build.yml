@@ -1,4 +1,3 @@
-
 name: Android Kernel Build and Release
 
 on:
@@ -17,11 +16,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld
 
-      - name: Download and install SukiSU
-        run: |
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-          
+      - name: Cache toolchain
+        id: cache-toolchain
+        uses: actions/cache@v3
+        with:
+          path: prebuilts
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('toolchain.version') }}
+          restore-keys: |
+            ${{ runner.os }}-toolchain-
+
       - name: Download and extract toolchain
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           PART1_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.00"
           PART2_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.01"
@@ -30,15 +35,32 @@ jobs:
           wget $PART1_URL
           wget $PART2_URL
           
-          # 合并所有分卷
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
-          
-          # 解压打包文件
           mkdir prebuilts
           tar -xzf toolchain.tar.gz -C prebuilts
           
           echo "--- 编译链已解压到 prebuilts/ ---"
 
+      - name: Cache ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: Configure ccache
+        run: |
+          export CCACHE_DIR=~/.ccache
+          export CCACHE_COMPRESS=1
+          export CCACHE_MAXSIZE=2G
+          ccache -M 2G
+          ccache -s
+
+      - name: Download and install SukiSU
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          
       - name: Run kernel build script
         run: |
           chmod +x ./build.sh
