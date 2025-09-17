@@ -36,8 +36,7 @@ jobs:
           wget $PART2_URL
           
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
-          mkdir prebuilts
-          tar -xzf toolchain.tar.gz -C prebuilts
+          tar -xzf toolchain.tar.gz
           
           echo "--- 编译链已解压到 prebuilts/ ---"
 
