@@ -83,6 +83,14 @@ jobs:
           echo "::set-output name=file_path::${UPLOAD_FILE_LINE#*=}"
           echo "已获取文件路径: ${{ steps.get_file_path.outputs.file_path }}"
 
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: S24-Kernel-Zip
+          path: |
+            out/*.zip
+            out/*.img
+   
       - name: Create Release
         id: create_release
         if: ${{ github.event.inputs.create_release == 'true' }}
