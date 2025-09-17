@@ -21,6 +21,8 @@ export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
 export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
 export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
 export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+export LLVM_AR=llvm-ar
+export LLVM_NM=llvm-nm
 
 MAKE_ARGS="
 O=out
