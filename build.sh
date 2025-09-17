@@ -84,12 +84,41 @@ zip -r9 "../${final_name}.zip" . -x "*.zip"
 ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
 UPLOAD_FILES="$ZIP_FILE_PATH"
 
+# =========================
+# 生成 boot.img
+# =========================
 echo "--- 正在创建 boot.img: ${final_name}.img ---"
 cp zImage tools/kernel
 cd tools
-chmod +x libmagiskboot.so
-lz4 boot.img.lz4
+
+if [ ! -f boot.img.lz4 ]; then
+  echo "错误: tools 目录下缺少 boot.img.lz4"
+  exit 1
+fi
+
+echo "--- 解压 boot.img.lz4 到 boot.img ---"
+lz4 -d boot.img.lz4 boot.img
+if [ $? -ne 0 ]; then
+  echo "错误: lz4 解压失败"
+  exit 1
+fi
+
+ls -lh boot.img
+file boot.img || true
+
+chmod +x libmagiskboot.so || true
+echo "--- 使用 magiskboot repack ---"
 ./libmagiskboot.so repack boot.img
+if [ $? -ne 0 ]; then
+  echo "错误: magiskboot repack 失败"
+  exit 1
+fi
+
+if [ ! -f new-boot.img ]; then
+  echo "错误: repack 没生成 new-boot.img"
+  exit 1
+fi
+
 mv new-boot.img "../../${final_name}.img"
 cd ../..
 
