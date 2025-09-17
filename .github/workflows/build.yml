@@ -74,6 +74,7 @@ jobs:
 
       - name: Create Release
         id: create_release
+        if: ${{ github.event.inputs.create_release == 'true' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,6 +86,7 @@ jobs:
             - Built from tag: ${{ github.ref }}
 
       - name: Upload Release Asset
+        if: ${{ github.event.inputs.create_release == 'true' }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
