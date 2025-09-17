@@ -2,6 +2,23 @@ name: Android Kernel Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+       branch:
+        description: '选择要编译的分支'
+        required: true
+        type: choice
+        options: [main, SukiSUUltra]
+        default: 'SukiSUUltra'
+       create_release:
+        description: '是否创建并上传 Release'
+        required: false
+        default: false
+        type: boolean
+       is_pre_release:
+        description: '是否标记为预发布版本'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
