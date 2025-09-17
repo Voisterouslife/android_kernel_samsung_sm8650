@@ -34,8 +34,7 @@ jobs:
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           
           # 解压打包文件
-          mkdir prebuilts
-          tar -xzf toolchain.tar.gz -C prebuilts
+          tar -xzf toolchain.tar.gz
           
           echo "--- 编译链已解压到 prebuilts/ ---"
 
