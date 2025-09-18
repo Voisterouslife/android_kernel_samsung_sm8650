@@ -32,7 +32,7 @@ jobs:
             echo "old_commit=$LAST_KNOWN_COMMIT"
             echo "new_commit=$LATEST_COMMIT"
             echo "new_commit_found=true" >> $GITHUB_OUTPUT
-            echo "$LATEST_COMMIT" > latest-commit.txt
+            echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
           else
             echo "--- No updates found. ---"
             echo "new_commit_found=false" >> $GITHUB_OUTPUT
@@ -44,7 +44,7 @@ jobs:
           COMMIT_HASH=$(cat latest-commit.txt)
           curl -s -X POST \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.WORKFLOW_TRIGGER_PAT }}" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build.yml/dispatches" \
             --data '{"ref":"${{ github.ref }}", "inputs":{}}'
             
@@ -52,9 +52,10 @@ jobs:
         if: steps.discover.outputs.new_commit_found == 'true'
         run: |
           echo "Updating sukisu_commits.json with new hash..."
-          jq --arg LCOMMIT "$LATEST_COMMIT" '.sukisuultra = $LCOMMIT' sukisu_commits.json > tmp.json && mv tmp.json sukisu_commits.json
+          jq --arg LCOMMIT "${{ steps.discover.outputs.latest_commit }}" '.sukisuultra = $LCOMMIT' sukisu_commits.json > tmp.json && mv tmp.json sukisu_commits.json
+          
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add sukisu_commits.json
-          git commit -m "chore: Update SukiSU-Ultra commit to ${LATEST_COMMIT:0:7}"
+          git commit -m "chore: Update SukiSU-Ultra commit to ${{ steps.discover.outputs.latest_commit }}"
           git push
