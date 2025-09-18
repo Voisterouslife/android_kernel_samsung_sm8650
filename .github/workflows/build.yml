@@ -118,12 +118,24 @@ jobs:
             - Build number: ${{ github.run_number }}
           prerelease: ${{ github.event.inputs.is_pre_release }}
 
-      - name: Upload Release Assets
-        if: ${{ github.event.inputs.create_release == 'true' }}
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ${{ steps.get_file_paths.outputs.zip_path }}
-            ${{ steps.get_file_paths.outputs.img_path }}
+      - name: Upload ZIP Release Asset
+        if: ${{ steps.get_file_paths.outputs.zip_path != '' }}
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.get_file_paths.outputs.zip_path }}
+          asset_name: S24U_SukiSUUltra_Build_${{ github.run_number }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload IMG Release Asset
+        if: ${{ steps.get_file_paths.outputs.img_path != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.get_file_paths.outputs.img_path }}
+          asset_name: S24U_SukiSUUltra_Build_${{ github.run_number }}.img
+          asset_content_type: application/octet-stream
