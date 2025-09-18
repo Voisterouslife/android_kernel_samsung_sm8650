@@ -99,11 +99,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: S24U_SukiSUUltra_Build_${{ github.run_number }}
+          release_name: 'S24U SukiSUUltra Release (Build ${{ github.run_number }})'
           body: |
-            A new kernel release is available!
-            - Built from tag: ${{ github.ref }}
+            A new kernel release for S24U is available!
+            - Built from: ${{ github.event.inputs.ref }}
+            - Build number: ${{ github.run_number }}
+          prerelease: ${{ github.event.inputs.is_pre_release }}
 
       - name: Upload Release Asset
         if: ${{ github.event.inputs.create_release == 'true' }}
