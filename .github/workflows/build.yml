@@ -3,26 +3,32 @@ name: Android Kernel Build and Release
 on:
   workflow_dispatch:
     inputs:
-       create_release:
+      ref:
+        description: '选择要编译的分支或标签'
+        required: true
+        default: 'SukiSUUltra'
+        type: string
+      create_release:
         description: '是否创建并上传 Release'
         required: false
         default: false
         type: boolean
-       is_pre_release:
+      is_pre_release:
         description: '是否标记为预发布版本'
         required: false
         default: false
         type: boolean
-
+  
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
 
       - name: Set up build environment
         run: |
@@ -37,7 +43,7 @@ jobs:
           key: ${{ runner.os }}-toolchain-${{ hashFiles('toolchain.version') }}
           restore-keys: |
             ${{ runner.os }}-toolchain-
-
+        
       - name: Download and extract toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
@@ -50,7 +56,7 @@ jobs:
           
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           tar -xzf toolchain.tar.gz
-          
+       
           echo "--- 编译链已解压到 prebuilts/ ---"
 
       - name: Cache ccache
@@ -78,22 +84,26 @@ jobs:
           chmod +x ./build.sh
           ./build.sh
 
-      - name: Get uploaded file path from script output
-        id: get_file_path
-        if: ${{ github.event.inputs.create_release == 'true' }}
-        run: |
-          UPLOAD_FILE_LINE=$(grep "UPLOAD_FILES" build.sh | tail -1)
-          echo "file_path=${UPLOAD_FILE_LINE#*=}" >> $GITHUB_OUTPUT
-          echo "已获取文件路径: ${{ steps.get_file_path.outputs.file_path }}"
-
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: S24-Kernel-Zip
+          name: S24-Kernel-Artifacts
           path: |
             out/*.zip
             out/*.img
-   
+            
+      - name: Get uploaded file paths
+        id: get_file_paths
+        if: ${{ github.event.inputs.create_release == 'true' }}
+        run: |
+          ZIP_FILE=$(find out/ -name "*.zip" | head -n 1)
+          IMG_FILE=$(find out/ -name "*.img" | head -n 1)
+          
+          echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
+          echo "img_path=$IMG_FILE" >> $GITHUB_OUTPUT
+          echo "已获取 ZIP 文件路径: $ZIP_FILE"
+          echo "已获取 IMG 文件路径: $IMG_FILE"
+
       - name: Create Release
         id: create_release
         if: ${{ github.event.inputs.create_release == 'true' }}
@@ -105,17 +115,15 @@ jobs:
           release_name: 'S24U SukiSUUltra Release (Build ${{ github.run_number }})'
           body: |
             A new kernel release for S24U is available!
-            - Built from: ${{ github.event.inputs.ref }}
             - Build number: ${{ github.run_number }}
           prerelease: ${{ github.event.inputs.is_pre_release }}
 
-      - name: Upload Release Asset
+      - name: Upload Release Assets
         if: ${{ github.event.inputs.create_release == 'true' }}
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ steps.get_file_paths.outputs.zip_path }}
+            ${{ steps.get_file_paths.outputs.img_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.get_file_path.outputs.file_path }}
-          asset_name: S24U_SukiSUUltra_Build_${{ github.run_number }}.zip
-          asset_content_type: application/zip
