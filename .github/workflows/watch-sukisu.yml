@@ -8,6 +8,8 @@ on:
 jobs:
   discover-updates:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write 
     outputs:
       new_commit_found: ${{ steps.discover.outputs.new_commit_found }}
     steps:
@@ -44,14 +46,15 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build.yml/dispatches" \
-            --data '{"ref":"${{ github.ref }}", "inputs":{"ref":"${{ github.ref }}","create_release":false,"is_pre_release":false}}'
+            --data '{"ref":"${{ github.ref }}", "inputs":{}}'
             
       - name: Update commit file
         if: steps.discover.outputs.new_commit_found == 'true'
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          echo "Updating sukisu_commits.json with new hash..."
           jq --arg LCOMMIT "$LATEST_COMMIT" '.sukisuultra = $LCOMMIT' sukisu_commits.json > tmp.json && mv tmp.json sukisu_commits.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add sukisu_commits.json
-          git commit -m "chore: Update SukiSU-Ultra commit to $LATEST_COMMIT"
+          git commit -m "chore: Update SukiSU-Ultra commit to ${LATEST_COMMIT:0:7}"
           git push
