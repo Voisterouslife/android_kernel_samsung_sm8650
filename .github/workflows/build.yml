@@ -117,5 +117,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.get_file_path.outputs.file_path }}
-          asset_name: ${{ github.ref }}.zip
+          asset_name: S24U_SukiSUUltra_Build_${{ github.run_number }}.zip
           asset_content_type: application/zip
