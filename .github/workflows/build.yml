@@ -78,9 +78,10 @@ jobs:
 
       - name: Get uploaded file path from script output
         id: get_file_path
+        if: ${{ github.event.inputs.create_release == 'true' }}
         run: |
           UPLOAD_FILE_LINE=$(grep "UPLOAD_FILES" build.sh | tail -1)
-          echo "::set-output name=file_path::${UPLOAD_FILE_LINE#*=}"
+          echo "file_path=${UPLOAD_FILE_LINE#*=}" >> $GITHUB_OUTPUT
           echo "已获取文件路径: ${{ steps.get_file_path.outputs.file_path }}"
 
       - name: Upload Build Artifact
