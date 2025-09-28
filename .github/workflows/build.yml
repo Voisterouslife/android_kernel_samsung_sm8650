@@ -3,12 +3,12 @@ name: Android Kernel Build and Release
 on:
   workflow_dispatch:
     inputs:
-       create_release:
+      create_release:
         description: '是否创建并上传 Release'
         required: false
         default: false
         type: boolean
-       is_pre_release:
+      is_pre_release:
         description: '是否标记为预发布版本'
         required: false
         default: false
@@ -17,7 +17,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,7 +26,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld
+          sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld 
 
       - name: Cache toolchain
         id: cache-toolchain
@@ -34,7 +35,7 @@ jobs:
           path: prebuilts
           key: ${{ runner.os }}-toolchain-${{ hashFiles('toolchain.version') }}
           restore-keys: |
-            ${{ runner.os }}-toolchain-
+            ${{ runner.os }}-toolchain- 
 
       - name: Download and extract toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
@@ -48,8 +49,8 @@ jobs:
           
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           tar -xzf toolchain.tar.gz
-          
-          echo "--- 编译链已解压到 prebuilts/ ---"
+       
+          echo "--- 编译链已解压到 prebuilts/ ---" 
 
       - name: Cache ccache
         uses: actions/cache@v3
@@ -57,7 +58,7 @@ jobs:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ${{ runner.os }}-ccache- 
 
       - name: Configure ccache
         run: |
@@ -65,44 +66,49 @@ jobs:
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=10G
           ccache -M 10G
-          ccache -s
+          ccache -s 
 
       - name: Download and install SukiSU
         run: |
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main 
           
       - name: Run kernel build script
         run: |
           chmod +x ./build.sh
-          ./build.sh
+          ./build.sh 
 
-      - name: Get uploaded file path from script output
-        id: get_file_path
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: S24-Kernel-Artifacts
+          path: |
+            out/*.zip
+            out/*.img 
+            
+      - name: Get uploaded file paths
+        id: get_file_paths
+        if: ${{ github.event.inputs.create_release == 'true' }}
         run: |
-          UPLOAD_FILE_LINE=$(grep "UPLOAD_FILES" build.sh | tail -1)
-          echo "::set-output name=file_path::${UPLOAD_FILE_LINE#*=}"
-          echo "已获取文件路径: ${{ steps.get_file_path.outputs.file_path }}"
+          ZIP_FILE=$(find out/ -name "*.zip" | head -n 1)
+          IMG_FILE=$(find out/ -name "*.img" | head -n 1)
+          
+          echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
+          echo "img_path=$IMG_FILE" >> $GITHUB_OUTPUT
+          echo "已获取 ZIP 文件路径: $ZIP_FILE"
+          echo "已获取 IMG 文件路径: $IMG_FILE" 
 
-      - name: Create Release
-        id: create_release
+      - name: Create and Upload Release
         if: ${{ github.event.inputs.create_release == 'true' }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          files: |
+            ${{ steps.get_file_paths.outputs.zip_path }}
+            ${{ steps.get_file_paths.outputs.img_path }}
+          tag_name: S24U_SukiSUUltra_Build_${{ github.run_number }}
+          name: 'S24U SukiSUUltra Release (Build ${{ github.run_number }})'
           body: |
-            A new kernel release is available!
-            - Built from tag: ${{ github.ref }}
-
-      - name: Upload Release Asset
-        if: ${{ github.event.inputs.create_release == 'true' }}
-        uses: actions/upload-release-asset@v1
+            A new kernel release for S24U is available!
+            - Build number: ${{ github.run_number }}
+          prerelease: ${{ github.event.inputs.is_pre_release }} 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.get_file_path.outputs.file_path }}
-          asset_name: ${{ github.ref }}.zip
-          asset_content_type: application/zip
