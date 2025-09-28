@@ -35,6 +35,7 @@
 #if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
 #include <linux/susfs_def.h>
 #endif
+
 #include <linux/fslog.h>
 #ifdef CONFIG_KDP_NS
 #include <linux/kdp.h>
@@ -1237,8 +1238,8 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 	struct mount *m;
 	struct mnt_namespace *mnt_ns;
 	int mnt_id;
-#endif
 
+#endif
 #ifdef CONFIG_KDP_NS
 	struct user_namespace *userns;
 #endif
@@ -1255,10 +1256,8 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 	mnt = alloc_vfsmnt(fc->source ?: "none", false, 0);
 bypass_orig_flow:
 #else
- 	mnt = alloc_vfsmnt(fc->source ?: "none");
-#endif
-
 	mnt = alloc_vfsmnt(fc->source ?: "none");
+#endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
 
@@ -4155,6 +4154,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	// Always let clone_mnt() in copy_tree() know it is from copy_mnt_ns()
 	copy_flags |= CL_COPY_MNT_NS;
 #endif
+
 #ifdef CONFIG_KDP_NS
 	new = copy_tree(old, ((struct kdp_mount *)old)->mnt->mnt_root, copy_flags);
 #else
