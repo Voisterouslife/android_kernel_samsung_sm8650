@@ -68,13 +68,6 @@ fi
 cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
-echo "--- 正在运行 patch_linux ---"
-chmod +x ./patch_linux
-./patch_linux
-mv oImage zImage
-rm -f Image oImage patch_linux
-echo "--- patch_linux 执行完毕, 已生成 zImage ---"
-
 kernel_release=$(cat ../include/config/kernel.release)
 final_name="${ZIP_NAME_PREFIX}_${kernel_release}_$(date '+%Y%m%d')"
 
