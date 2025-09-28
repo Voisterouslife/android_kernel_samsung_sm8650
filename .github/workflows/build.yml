@@ -67,11 +67,7 @@ jobs:
           export CCACHE_MAXSIZE=10G
           ccache -M 10G
           ccache -s 
-
-      - name: Download and install SukiSU
-        run: |
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main 
-          
+  
       - name: Run kernel build script
         run: |
           chmod +x ./build.sh
