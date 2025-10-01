@@ -19,7 +19,7 @@
 #include <linux/pagemap.h>
 #include <linux/compat.h>
 
-#if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_SUS_SU)
+#if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_SU)
 #include <linux/susfs_def.h>
 #endif
 #include <linux/uaccess.h>
@@ -52,7 +52,7 @@ void generic_fillattr(struct user_namespace *mnt_userns, struct inode *inode,
 		      struct kstat *stat)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-	if (likely(susfs_is_current_non_root_user_app_proc()) &&
+	if (likely(susfs_is_current_proc_umounted()) &&
 			unlikely(inode->i_mapping->flags & BIT_SUS_KSTAT)) {
 		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
 		stat->mode = inode->i_mode;
@@ -238,9 +238,6 @@ static int vfs_statx(int dfd, struct filename *filename, int flags,
 	struct path path;
 	unsigned int lookup_flags = getname_statx_lookup_flags(flags);
 	int error;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	struct mount *mnt;
-#endif
 
 	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT | AT_EMPTY_PATH |
 		      AT_STATX_SYNC_TYPE))
@@ -253,15 +250,7 @@ retry:
 
 	error = vfs_getattr(&path, stat, request_mask, flags);
 
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	mnt = real_mount(path.mnt);
-	if (likely(susfs_is_current_non_root_user_app_proc())) {
-		for (; mnt->mnt_id >= DEFAULT_SUS_MNT_ID; mnt = mnt->mnt_parent) {}
-	}
-	stat->mnt_id = mnt->mnt_id;
-#else
 	stat->mnt_id = real_mount(path.mnt)->mnt_id;
-#endif
 	stat->result_mask |= STATX_MNT_ID;
 
 	if (path.mnt->mnt_root == path.dentry)
@@ -299,7 +288,7 @@ int vfs_fstatat(int dfd, const char __user *filename,
 	struct filename *name;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
-	if (likely(susfs_is_current_proc_su_not_allowed())) {
+	if (likely(susfs_is_current_proc_umounted())) {
 		goto orig_flow1;
 	}
 	if (likely(susfs_is_sus_su_hooks_enabled) &&
