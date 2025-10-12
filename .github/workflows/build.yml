@@ -74,7 +74,7 @@ jobs:
           
       - name: Run Baseband-guard setup script  
         run: |
-          wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+          wget -O- https://github.com/Voisterouslife/Baseband-guard/raw/main/setup.sh | bash
 
       - name: Run kernel build script
         run: |
