@@ -74,14 +74,7 @@ jobs:
           
       - name: Run Baseband-guard setup script  
         run: |
-          echo "--- 正在运行 Baseband-guard setup 脚本 ---"
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
-          
-      - name: Apply LSM Kconfig fix           
-        run: |
-          echo "--- 正在应用 LSM Kconfig 修复 ---"
-          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/landlock/landlock,baseband_guard/ } }' security/Kconfig
-          echo "--- Kconfig 修复已完成 ---"
 
       - name: Run kernel build script
         run: |
