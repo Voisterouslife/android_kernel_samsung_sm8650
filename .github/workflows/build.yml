@@ -66,7 +66,7 @@ jobs:
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=15G
           ccache -M 15G
-          ccache -z # 在构建前清零统计数据
+          ccache -z 
 
       - name: Download and install SukiSU
         run: |
@@ -85,8 +85,9 @@ jobs:
 
       - name: Run kernel build script
         run: |
-          chmod +x ./build.sh
-          ./build.sh
+          SCRIPT_PATH=".github/workflows/state/build.sh"
+          chmod +x "$SCRIPT_PATH"
+          "$SCRIPT_PATH"
       
       - name: Show ccache stats
         run: |

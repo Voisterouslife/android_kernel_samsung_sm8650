@@ -1,4 +1,3 @@
-#!/bin/bash
 set -e
 
 MAIN_DEFCONFIG=pineapple_gki_defconfig
@@ -9,7 +8,6 @@ ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
 ANYKERNEL_BRANCH="pineapple"
 ZIP_NAME_PREFIX="S24_kernel"
 
-cd "$(dirname "$0")"
 
 export PATH="$TOOLCHAIN/build-tools/linux-x86/bin:$TOOLCHAIN/build-tools/path/linux-x86:$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$TOOLCHAIN/clang-tools/linux-x86/bin:$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH"
 
@@ -115,7 +113,7 @@ if [ ! -f new-boot.img ]; then
 fi
 
 mv new-boot.img "../../${final_name}.img"
-cd ../..
+cd ../.. 
 
 IMG_FILE_PATH=$(realpath "${final_name}.img")
 
