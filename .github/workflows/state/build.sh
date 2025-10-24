@@ -17,7 +17,7 @@ export CCACHE_EXEC=$(which ccache)
 MAKE_ARGS="
 O=out
 ARCH=arm64
-CC="ccache clang"
+CC='ccache clang'
 LLVM=1
 LLVM_IAS=1
 "
