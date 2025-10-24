@@ -25,14 +25,14 @@ rm -rf out
 
 TARGET_DEFCONFIG=${1:-$MAIN_DEFCONFIG}
 echo "--- 正在应用 defconfig: $TARGET_DEFCONFIG ---"
-make $TARGET_DEFCONFIG
+make O=out $TARGET_DEFCONFIG
 if [ $? -ne 0 ]; then
     echo "错误: 应用 defconfig '$TARGET_DEFCONFIG' 失败。"
     exit 1
 fi
 
 echo "--- 正在应用自定义内核配置 ---"
-scripts/config \
+scripts/config --file out/.config \
   -d UH \
   -d RKP \
   -d KDP \
@@ -43,7 +43,7 @@ scripts/config \
 
 echo "--- 开始内核编译 (make -j$(nproc)) ---"
 BUILD_START=$(date +"%s")
-make -j$(nproc) LOCALVERSION="${LOCALVERSION_BASE}"
+make O=out -j$(nproc) LOCALVERSION="${LOCALVERSION_BASE}"
 BUILD_END=$(date +"%s")
 BUILD_STATUS=$?
 
@@ -56,6 +56,10 @@ BUILD_TIME=$((BUILD_END - BUILD_START))
 echo -e "\n--- 内核编译成功！耗时: ${BUILD_TIME} 秒 ---\n"
 
 echo "--- 正在准备打包环境 ---"
+
+echo "--- 检查 out 目录是否存在 ---"
+ls -ld out
+
 cd out
 
 if [ ! -d AnyKernel3 ]; then
@@ -111,7 +115,7 @@ if [ ! -f new-boot.img ]; then
 fi
 
 mv new-boot.img "../../${final_name}.img"
-cd ../.. 
+cd ../..
 
 IMG_FILE_PATH=$(realpath "${final_name}.img")
 
