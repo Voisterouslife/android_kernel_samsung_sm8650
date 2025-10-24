@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 MAIN_DEFCONFIG=pineapple_gki_defconfig
@@ -8,26 +9,22 @@ ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
 ANYKERNEL_BRANCH="pineapple"
 ZIP_NAME_PREFIX="S24_kernel"
 
-
 export PATH="$TOOLCHAIN/build-tools/linux-x86/bin:$TOOLCHAIN/build-tools/path/linux-x86:$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$TOOLCHAIN/clang-tools/linux-x86/bin:$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH"
 
 export USE_CCACHE=1
 export CCACHE_EXEC=$(which ccache)
 
-MAKE_ARGS="
-O=out
-ARCH=arm64
-CC='ccache clang'
-LLVM=1
-LLVM_IAS=1
-"
-
+export O=out
+export ARCH=arm64
+export CC='ccache clang'
+export LLVM=1
+export LLVM_IAS=1
 echo "--- 正在清理 (rm -rf out) ---"
 rm -rf out
 
 TARGET_DEFCONFIG=${1:-$MAIN_DEFCONFIG}
 echo "--- 正在应用 defconfig: $TARGET_DEFCONFIG ---"
-make ${MAKE_ARGS} $TARGET_DEFCONFIG
+make $TARGET_DEFCONFIG
 if [ $? -ne 0 ]; then
     echo "错误: 应用 defconfig '$TARGET_DEFCONFIG' 失败。"
     exit 1
@@ -45,7 +42,7 @@ echo "--- 正在应用自定义内核配置 ---"
 
 echo "--- 开始内核编译 (make -j$(nproc)) ---"
 BUILD_START=$(date +"%s")
-make -j$(nproc) ${MAKE_ARGS} LOCALVERSION="${LOCALVERSION_BASE}"
+make -j$(nproc) LOCALVERSION="${LOCALVERSION_BASE}"
 BUILD_END=$(date +"%s")
 BUILD_STATUS=$?
 
