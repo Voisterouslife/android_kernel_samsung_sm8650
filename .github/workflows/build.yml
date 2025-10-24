@@ -26,7 +26,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld 
+          sudo apt-get install -y build-essential git libncurses5-dev bc bison flex libssl-dev p7zip-full lz4 cpio curl libelf-dev dwarves ccache jq lld patch
 
       - name: Cache toolchain
         id: cache-toolchain
@@ -35,7 +35,7 @@ jobs:
           path: prebuilts
           key: ${{ runner.os }}-toolchain-${{ hashFiles('toolchain.version') }}
           restore-keys: |
-            ${{ runner.os }}-toolchain- 
+            ${{ runner.os }}-toolchain-
 
       - name: Download and extract toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
@@ -50,7 +50,7 @@ jobs:
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           tar -xzf toolchain.tar.gz
        
-          echo "--- 编译链已解压到 prebuilts/ ---" 
+          echo "--- 编译链已解压到 prebuilts/ ---"
 
       - name: Cache ccache
         uses: actions/cache@v3
@@ -58,7 +58,7 @@ jobs:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache- 
+            ${{ runner.os }}-ccache-
 
       - name: Configure ccache
         run: |
@@ -66,13 +66,20 @@ jobs:
           export CCACHE_COMPRESS=1
           export CCACHE_MAXSIZE=10G
           ccache -M 10G
-          ccache -s 
+          ccache -s
 
       - name: Download and install SukiSU
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
           
-      - name: Run Baseband-guard setup script  
+      - name: Download and apply SukiSU patch
+        run: |
+          echo "--- 正在下载 SukiSU 补丁 ---"
+          wget -O suki.patch https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/hooks/scope_min_manual_hooks_v1.5.patch
+          echo "--- 正在应用 SukiSU 补丁 ---"
+          patch -p1 < suki.patch
+
+      - name: Run Baseband-guard setup script
         run: |
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
 
@@ -87,7 +94,7 @@ jobs:
           name: S24-Kernel-Artifacts
           path: |
             out/*.zip
-            out/*.img 
+            out/*.img
             
       - name: Get uploaded file paths
         id: get_file_paths
@@ -99,7 +106,7 @@ jobs:
           echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
           echo "img_path=$IMG_FILE" >> $GITHUB_OUTPUT
           echo "已获取 ZIP 文件路径: $ZIP_FILE"
-          echo "已获取 IMG 文件路径: $IMG_FILE" 
+          echo "已获取 IMG 文件路径: $IMG_FILE"
 
       - name: Create and Upload Release
         if: ${{ github.event.inputs.create_release == 'true' }}
@@ -113,6 +120,6 @@ jobs:
           body: |
             A new kernel release for S24U is available!
             - Build number: ${{ github.run_number }}
-          prerelease: ${{ github.event.inputs.is_pre_release }} 
+          prerelease: ${{ github.event.inputs.is_pre_release }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
