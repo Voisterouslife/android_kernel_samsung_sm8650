@@ -6945,7 +6945,7 @@ CONFIG_SECURITY_DEFEX_USER=y
 CONFIG_SECURITY_DSMS=y
 CONFIG_DEFAULT_SECURITY_SELINUX=y
 # CONFIG_DEFAULT_SECURITY_DAC is not set
-CONFIG_LSM="landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,baseband_guard,bpf"
+CONFIG_LSM="landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf,baseband_guard"
 CONFIG_DDAR=y
 # CONFIG_DDAR_KEY_DUMP is not set
 CONFIG_KZT=y
