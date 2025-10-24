@@ -19,6 +19,7 @@ export ARCH=arm64
 export CC='ccache clang'
 export LLVM=1
 export LLVM_IAS=1
+
 echo "--- 正在清理 (rm -rf out) ---"
 rm -rf out
 
@@ -31,7 +32,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "--- 正在应用自定义内核配置 ---"
-./scripts/config --file out/.config \
+scripts/config \
   -d UH \
   -d RKP \
   -d KDP \
