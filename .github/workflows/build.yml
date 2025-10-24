@@ -56,17 +56,17 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          key: ${{ runner.os }}-ccache-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ${{ runner.os }}-ccache-refs/heads/${{ github.event.repository.default_branch }}
 
       - name: Configure ccache
         run: |
           export CCACHE_DIR=~/.ccache
           export CCACHE_COMPRESS=1
-          export CCACHE_MAXSIZE=10G
-          ccache -M 10G
-          ccache -s
+          export CCACHE_MAXSIZE=15G
+          ccache -M 15G
+          ccache -z # 在构建前清零统计数据
 
       - name: Download and install SukiSU
         run: |
@@ -87,6 +87,11 @@ jobs:
         run: |
           chmod +x ./build.sh
           ./build.sh
+      
+      - name: Show ccache stats
+        run: |
+          echo "--- Ccache 统计信息 ---"
+          ccache -s
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
