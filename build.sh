@@ -1,27 +1,25 @@
+#!/bin/bash
 set -e
 
 MAIN_DEFCONFIG=pineapple_gki_defconfig
 LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
-LTO=""
 
 TOOLCHAIN=$(realpath "$GITHUB_WORKSPACE/prebuilts")
-
 ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
 ANYKERNEL_BRANCH="pineapple"
 ZIP_NAME_PREFIX="S24_kernel"
 
 cd "$(dirname "$0")"
 
-export PATH=$TOOLCHAIN/build-tools/linux-x86/bin:$PATH
-export PATH=$TOOLCHAIN/build-tools/path/linux-x86:$PATH
-export PATH=$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$PATH
-export PATH=$TOOLCHAIN/clang-tools/linux-x86/bin:$PATH
-export PATH=$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH
+export PATH="$TOOLCHAIN/build-tools/linux-x86/bin:$TOOLCHAIN/build-tools/path/linux-x86:$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$TOOLCHAIN/clang-tools/linux-x86/bin:$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH"
+
+export USE_CCACHE=1
+export CCACHE_EXEC=$(which ccache)
 
 MAKE_ARGS="
 O=out
 ARCH=arm64
-CC=clang
+CC="ccache clang"
 LLVM=1
 LLVM_IAS=1
 "
@@ -37,6 +35,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "--- 正在应用自定义内核配置 ---"
 ./scripts/config --file out/.config \
   -d UH \
   -d RKP \
@@ -46,31 +45,43 @@ fi
   -d FIVE \
   -d TRIM_UNUSED_KSYMS
 
+echo "--- 开始内核编译 (make -j$(nproc)) ---"
+BUILD_START=$(date +"%s")
 make -j$(nproc) ${MAKE_ARGS} LOCALVERSION="${LOCALVERSION_BASE}"
+BUILD_END=$(date +"%s")
 BUILD_STATUS=$?
 
 if [ $BUILD_STATUS -ne 0 ]; then
     echo "--- 内核编译失败！ ---"
-    echo "请检查屏幕上的错误信息。"
     exit 1
 fi
 
-echo -e "\n--- 内核编译成功！ ---\n"
+BUILD_TIME=$((BUILD_END - BUILD_START))
+echo -e "\n--- 内核编译成功！耗时: ${BUILD_TIME} 秒 ---\n"
 
 echo "--- 正在准备打包环境 ---"
 cd out
 
 if [ ! -d AnyKernel3 ]; then
-  echo "--- 正在克隆 AnyKernel3 仓库 (分支: ${ANYKERNEL_BRANCH}) ---"
+  echo "--- 首次克隆 AnyKernel3 仓库 (分支: ${ANYKERNEL_BRANCH}) ---"
   git clone --depth=1 "${ANYKERNEL_REPO}" -b "${ANYKERNEL_BRANCH}" AnyKernel3
+else
+  echo "--- AnyKernel3 已存在，正在拉取更新 ---"
+  cd AnyKernel3 && git pull && cd ..
 fi
 
 cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
+echo "--- 正在从网络下载 patch_linux 脚本 ---"
+wget -O patch_linux "https://github.com/SukiSU-Ultra/SukiSU_patch/raw/refs/heads/main/kpm/patch_linux"
+if [ $? -ne 0 ]; then
+    echo "错误: 下载 patch_linux 失败！"
+    exit 1
+fi
+
 echo "--- 正在运行 patch_linux ---"
-chmod +x ./patch_linux
-./patch_linux
+chmod +x ./patch_linux && ./patch_linux
 mv oImage zImage
 rm -f Image oImage patch_linux
 echo "--- patch_linux 执行完毕, 已生成 zImage ---"
@@ -80,13 +91,8 @@ final_name="${ZIP_NAME_PREFIX}_${kernel_release}_$(date '+%Y%m%d')"
 
 echo "--- 正在创建 Zip 刷机包: ${final_name}.zip ---"
 zip -r9 "../${final_name}.zip" . -x "*.zip"
-
 ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
-UPLOAD_FILES="$ZIP_FILE_PATH"
 
-# =========================
-# 生成 boot.img
-# =========================
 echo "--- 正在创建 boot.img: ${final_name}.img ---"
 cp zImage tools/kernel
 cd tools
@@ -98,24 +104,13 @@ fi
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
 lz4 -d boot.img.lz4 boot.img
-if [ $? -ne 0 ]; then
-  echo "错误: lz4 解压失败"
-  exit 1
-fi
-
-ls -lh boot.img
-file boot.img || true
 
 chmod +x libmagiskboot.so || true
 echo "--- 使用 magiskboot repack ---"
 ./libmagiskboot.so repack boot.img
-if [ $? -ne 0 ]; then
-  echo "错误: magiskboot repack 失败"
-  exit 1
-fi
 
 if [ ! -f new-boot.img ]; then
-  echo "错误: repack 没生成 new-boot.img"
+  echo "错误: repack 未能生成 new-boot.img"
   exit 1
 fi
 
@@ -123,7 +118,6 @@ mv new-boot.img "../../${final_name}.img"
 cd ../..
 
 IMG_FILE_PATH=$(realpath "${final_name}.img")
-UPLOAD_FILES="$UPLOAD_FILES $IMG_FILE_PATH"
 
 echo "======================================================"
 echo "成功！"
