@@ -105,9 +105,9 @@ jobs:
       - name: Get uploaded file paths
         id: get_file_paths
         if: ${{ github.event.inputs.create_release == 'true' }}
-        run: |
-          ZIP_FILE=$(find out/ -name "*.zip" | head -n 1)
-          IMG_FILE=$(find out/ -name "*.img" | head -n 1)
+        run: |          
+          ZIP_FILE=$(find out/ -maxdepth 1 -name "*.zip" | head -n 1)
+          IMG_FILE=$(find out/ -maxdepth 1 -name "*.img" | head -n 1)
           
           echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
           echo "img_path=$IMG_FILE" >> $GITHUB_OUTPUT
