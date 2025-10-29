@@ -95,28 +95,24 @@ ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
 echo "--- 正在创建 boot.img: ${final_name}.img ---"
 cd tools
 
-if [ ! -f boot.img.lz4 ]; then
-  echo "错误: tools 目录下缺少 boot.img.lz4 模板！"
-  exit 1
-fi
-
 chmod +x magiskboot-x86_64
-cp ../zImage ./kernel
+cp ../zImage ./kernel 
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
 lz4 -d boot.img.lz4 boot.img
 
+echo "--- 使用 magiskboot unpack 解包 boot.img ---"
+./magiskboot-x86_64 unpack boot.img
+
 echo "--- 使用 magiskboot repack 进行重打包 ---"
-./magiskboot-x86_64 repack boot.img
+./magiskboot-x86_64 repack boot.img new-boot.img
 
 if [ ! -f new-boot.img ]; then
   echo "错误: repack 未能生成 new-boot.img"
   exit 1
 fi
 
-mv new-boot.img "../../${final_name}.img"
-cd ../..
-
+echo "--- 重打包成功，正在移动 boot.img ---"
 mv new-boot.img "../../${final_name}.img"
 cd ../..
 
