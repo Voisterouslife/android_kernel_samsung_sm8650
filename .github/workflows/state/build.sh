@@ -6,6 +6,7 @@ LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
 
 TOOLCHAIN=$(realpath "$GITHUB_WORKSPACE/prebuilts")
 ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
+ANYKERNEL_BRANCH="pineapple"
 ZIP_NAME_PREFIX="S24_kernel"
 
 export PATH="$TOOLCHAIN/build-tools/linux-x86/bin:$TOOLCHAIN/build-tools/path/linux-x86:$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$TOOLCHAIN/clang-tools/linux-x86/bin:$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH"
@@ -62,8 +63,8 @@ ls -ld out
 cd out
 
 if [ ! -d AnyKernel3 ]; then
-  echo "--- 首次克隆 AnyKernel3 仓库 (使用默认分支) ---"
-  git clone --depth=1 "${ANYKERNEL_REPO}" AnyKernel3
+  echo "--- 首次克隆 AnyKernel3 仓库 (分支: ${ANYKERNEL_BRANCH}) ---"
+  git clone --depth=1 "${ANYKERNEL_REPO}" -b "${ANYKERNEL_BRANCH}" AnyKernel3
 else
   echo "--- AnyKernel3 已存在，正在拉取更新 ---"
   cd AnyKernel3 && git pull && cd ..
@@ -93,25 +94,29 @@ zip -r9 "../${final_name}.zip" . -x "*.zip"
 ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
 
 echo "--- 正在创建 boot.img: ${final_name}.img ---"
-cp zImage tools/kernel
 cd tools
 
 if [ ! -f boot.img.lz4 ]; then
-  echo "错误: tools 目录下缺少 boot.img.lz4"
+  echo "错误: tools 目录下缺少 boot.img.lz4 模板！"
   exit 1
 fi
+
+chmod +x magiskboot
+cp ../zImage ./kernel
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
 lz4 -d boot.img.lz4 boot.img
 
-chmod +x libmagiskboot.so || true
-echo "--- 使用 magiskboot repack ---"
-./libmagiskboot.so repack boot.img
+echo "--- 使用 magiskboot repack 进行重打包 ---"
+./magiskboot repack boot.img
 
 if [ ! -f new-boot.img ]; then
   echo "错误: repack 未能生成 new-boot.img"
   exit 1
 fi
+
+mv new-boot.img "../../${final_name}.img"
+cd ../..
 
 mv new-boot.img "../../${final_name}.img"
 cd ../..
