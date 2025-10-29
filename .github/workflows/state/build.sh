@@ -6,7 +6,6 @@ LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
 
 TOOLCHAIN=$(realpath "$GITHUB_WORKSPACE/prebuilts")
 ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
-ANYKERNEL_BRANCH="pineapple"
 ZIP_NAME_PREFIX="S24_kernel"
 
 export PATH="$TOOLCHAIN/build-tools/linux-x86/bin:$TOOLCHAIN/build-tools/path/linux-x86:$TOOLCHAIN/clang/host/linux-x86/clang-r487747c/bin:$TOOLCHAIN/clang-tools/linux-x86/bin:$TOOLCHAIN/kernel-build-tools/linux-x86/bin:$PATH"
@@ -64,7 +63,7 @@ cd out
 
 if [ ! -d AnyKernel3 ]; then
   echo "--- 首次克隆 AnyKernel3 仓库 (分支: ${ANYKERNEL_BRANCH}) ---"
-  git clone --depth=1 "${ANYKERNEL_REPO}" -b "${ANYKERNEL_BRANCH}" AnyKernel3
+  git clone --depth=1 "${ANYKERNEL_REPO}" AnyKernel3
 else
   echo "--- AnyKernel3 已存在，正在拉取更新 ---"
   cd AnyKernel3 && git pull && cd ..
