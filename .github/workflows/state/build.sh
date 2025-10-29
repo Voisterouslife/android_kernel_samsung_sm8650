@@ -100,14 +100,14 @@ if [ ! -f boot.img.lz4 ]; then
   exit 1
 fi
 
-chmod +x magiskboot
+chmod +x magiskboot-x86_64
 cp ../zImage ./kernel
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
 lz4 -d boot.img.lz4 boot.img
 
 echo "--- 使用 magiskboot repack 进行重打包 ---"
-./magiskboot repack boot.img
+./magiskboot-x86_64 repack boot.img
 
 if [ ! -f new-boot.img ]; then
   echo "错误: repack 未能生成 new-boot.img"
