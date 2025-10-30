@@ -96,13 +96,13 @@ echo "--- 正在创建 boot.img: ${final_name}.img ---"
 cd tools
 
 chmod +x libmagiskboot.so || true
-cp ../zImage ./kernel 
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
 lz4 -d boot.img.lz4 boot.img
 
 echo "--- 使用 magiskboot unpack 解包 boot.img ---"
 ./libmagiskboot.so unpack boot.img
+cp ../zImage ./kernel 
 
 echo "--- 使用 magiskboot repack 进行重打包 ---"
 ./libmagiskboot.so repack boot.img new-boot.img
