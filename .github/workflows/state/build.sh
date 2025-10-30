@@ -95,7 +95,7 @@ ZIP_FILE_PATH=$(realpath "../${final_name}.zip")
 echo "--- 正在创建 boot.img: ${final_name}.img ---"
 cd tools
 
-chmod +x libmagiskboot.so
+chmod +x libmagiskboot.so || true
 cp ../zImage ./kernel 
 
 echo "--- 解压 boot.img.lz4 到 boot.img ---"
