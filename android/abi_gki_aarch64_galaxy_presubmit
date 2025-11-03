@@ -1,3 +1,6 @@
 [abi_symbol_list]
 log_suspend_abort_reason
 drop_reasons
+cancel_work
+__traceiter_android_rvh_sk_alloc
+__tracepoint_android_rvh_sk_alloc

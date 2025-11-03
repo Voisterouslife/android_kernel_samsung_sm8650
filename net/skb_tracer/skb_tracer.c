@@ -57,13 +57,16 @@ void skb_tracer_func_trace(const struct sock *const_sk,
 	struct skb_tracer *tracer;
 	struct sock *sk = (struct sock *)const_sk;
 
-	if (!sk || !skb || sk->sk_protocol != IPPROTO_TCP)
+	if (!sk || !skb)
 		return;
 
 	if (sk->sk_state == TCP_NEW_SYN_RECV) {
 		struct request_sock *req = inet_reqsk(sk);
 		sk = req->rsk_listener;
 	}
+
+	if (sk->sk_protocol != IPPROTO_TCP)
+		return;
 
 	if (sk->sk_tracer_mask == 0)
 		return;

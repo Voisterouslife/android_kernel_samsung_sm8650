@@ -89,6 +89,10 @@ static struct workqueue_struct *eWq; // default = 0
 
 wait_queue_head_t ncm_wq;
 
+static volatile bool ncm_wq_initialized = false;
+
+static volatile bool knox_socket = false;
+
 static atomic_t isNCMEnabled = ATOMIC_INIT(0);
 
 static atomic_t isIntermediateFlowEnabled = ATOMIC_INIT(0);
@@ -204,7 +208,12 @@ static void initialize_kfifo(void) {
 	INIT_KFIFO(knox_sock_info);
 	if (kfifo_initialized(&knox_sock_info)) {
 		NCM_LOGD("The kfifo for knox ncm has been initialized \n");
-		init_waitqueue_head(&ncm_wq);
+		mutex_lock(&ncm_lock);
+		if (!ncm_wq_initialized) {
+			init_waitqueue_head(&ncm_wq);
+			ncm_wq_initialized = true;
+		}
+		mutex_unlock(&ncm_lock);
 	}
 }
 
@@ -220,7 +229,10 @@ static void initialize_ncmworkqueue(void) {
 static void free_kfifo(void) {
 	if (kfifo_status()) {
 		NCM_LOGD("The kfifo for knox ncm which was intialized is freed \n");
-		kfifo_free(&knox_sock_info);
+		if(!knox_socket) {
+			kfifo_free(&knox_sock_info);
+			ncm_wq_initialized = false;
+		}
 	}
 }
 
@@ -615,7 +627,6 @@ void knox_collect_conntrack_data(struct nf_conn *ct, int startStop, int where) {
 		struct knox_socket_metadata *ksm = kzalloc(sizeof(struct knox_socket_metadata), GFP_ATOMIC);
 		struct nf_conntrack_tuple *tuple = NULL;
 		struct timespec64 close_timespec;
-
 		if (ksm == NULL) {
 			printk("kzalloc atomic memory allocation failed\n");
 			return;
@@ -684,7 +695,6 @@ void knox_collect_conntrack_data(struct nf_conn *ct, int startStop, int where) {
 		} else {
 			ksm->flow_type = 0;
 		}
-
 		insert_data_kfifo_kthread(ksm);
 	}
 }
@@ -724,7 +734,6 @@ static ssize_t ncm_copy_data_user_64(char __user *buf, size_t count)
 
 	unsigned long copied;
 	int read = 0;
-
 	if (mutex_lock_interruptible(&ncm_lock)) {
 		NCM_LOGE("ncm_copy_data_user failed:Signal interuption \n");
 		return 0;
@@ -770,7 +779,6 @@ static ssize_t ncm_copy_data_user(char __user *buf, size_t count)
 
 	unsigned long copied;
 	int read = 0;
-
 	if (mutex_lock_interruptible(&ncm_lock)) {
 		NCM_LOGE("ncm_copy_data_user failed:Signal interuption \n");
 		return 0;
@@ -832,7 +840,6 @@ static ssize_t ncm_read(struct file *file, char __user *buf, size_t count, loff_
 		NCM_LOGD("ewq..Single Thread created\r\n");
 		eWq = create_workqueue("ncmworkqueue");
 	}
-
 	#ifdef CONFIG_64BIT
 	return ncm_copy_data_user_64(buf, count);
 	#else
@@ -954,26 +961,37 @@ static long ncm_ioctl_evt(struct file *file, unsigned int cmd, unsigned long arg
 static unsigned int ncm_poll(struct file *file, poll_table *pt) {
 	int mask = 0;
 	int ret = 0;
-	if (kfifo_is_empty(&knox_sock_info)) {
-		ret = wait_event_interruptible_timeout(ncm_wq, !kfifo_is_empty(&knox_sock_info), msecs_to_jiffies(WAIT_TIMEOUT));
-		switch (ret) {
-		case -ERESTARTSYS:
-			mask = -EINTR;
-			break;
-		case 0:
-			mask = 0;
-			break;
-		case 1:
-			mask |= POLLIN | POLLRDNORM;
-			break;
-		default:
-			mask |= POLLIN | POLLRDNORM;
-			break;
-		}
-		return mask;
-	} else {
+	mutex_lock(&ncm_lock);
+	if (!kfifo_is_empty(&knox_sock_info)) {
 		mask |= POLLIN | POLLRDNORM;
+		mutex_unlock(&ncm_lock);
+		return mask;
 	}
+	if(!ncm_wq_initialized) {
+		mutex_unlock(&ncm_lock);
+		return mask;
+	}
+	knox_socket = true;
+	poll_wait(file,&ncm_wq,pt);
+	mutex_unlock(&ncm_lock);
+	ret = wait_event_interruptible_timeout(ncm_wq, !kfifo_is_empty(&knox_sock_info), msecs_to_jiffies(WAIT_TIMEOUT));
+	knox_socket = false;
+	mutex_lock(&ncm_lock);
+	switch (ret) {
+	case -ERESTARTSYS:
+		mask = -EINTR;
+		break;
+	case 0:
+		mask = 0;
+		break;
+	case 1:
+		mask |= POLLIN | POLLRDNORM;
+		break;
+	default:
+		mask |= POLLIN | POLLRDNORM;
+		break;
+	}
+	mutex_unlock(&ncm_lock);
 	return mask;
 }
 
