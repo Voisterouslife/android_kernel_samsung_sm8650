@@ -95,6 +95,10 @@ extern const int mmap_rnd_compat_bits_max;
 extern int mmap_rnd_compat_bits __read_mostly;
 #endif
 
+#ifndef PHYSMEM_END
+# define PHYSMEM_END	((1ULL << MAX_PHYSMEM_BITS) - 1)
+#endif
+
 #include <asm/page.h>
 #include <asm/processor.h>
 
@@ -3824,6 +3828,27 @@ madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
 extern phys_addr_t memmapsize;
 extern unsigned long physpages, codesize, datasize, rosize, bss_size;
 extern unsigned long init_code_size, init_data_size;
+
+#define MB_TO_PAGES(x) ((x) << (20 - PAGE_SHIFT))
+#define GB_TO_PAGES(x) ((x) << (30 - PAGE_SHIFT))
+
+static inline bool file_is_tiny(unsigned long low_threshold)
+{
+	return (global_node_page_state(NR_ACTIVE_FILE) +
+		global_node_page_state(NR_INACTIVE_FILE)) < low_threshold;
+}
+
+static inline unsigned long get_low_threshold(void)
+{
+	if (totalram_pages() > GB_TO_PAGES(4))
+		return MB_TO_PAGES(500);
+	else if (totalram_pages() > GB_TO_PAGES(3))
+		return MB_TO_PAGES(400);
+	else if (totalram_pages() > GB_TO_PAGES(2))
+		return MB_TO_PAGES(300);
+	else
+		return MB_TO_PAGES(200);
+}
 
 #define GPU_PAGE_MAGIC (0x9A0E06B9A0E)
 

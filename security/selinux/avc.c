@@ -47,12 +47,6 @@
 #undef CREATE_TRACE_POINTS
 #include <trace/hooks/avc.h>
 
-#ifdef CONFIG_KSU_SUSFS
-extern u32 susfs_ksu_sid;
-extern u32 susfs_kernel_sid;
-bool susfs_is_avc_log_spoofing_enabled = false;
-#endif
-
 struct avc_entry {
 	u32			ssid;
 	u32			tsid;
@@ -341,12 +335,12 @@ static int avc_add_xperms_decision(struct avc_node *node,
 {
 	struct avc_xperms_decision_node *dest_xpd;
 
-	node->ae.xp_node->xp.len++;
 	dest_xpd = avc_xperms_decision_alloc(src->used);
 	if (!dest_xpd)
 		return -ENOMEM;
 	avc_copy_xperms_decision(&dest_xpd->xpd, src);
 	list_add(&dest_xpd->xpd_list, &node->ae.xp_node->xpd_head);
+	node->ae.xp_node->xp.len++;
 	return 0;
 }
 
@@ -738,22 +732,11 @@ static void avc_audit_post_callback(struct audit_buffer *ab, void *a)
 
 	rc = security_sid_to_context(sad->state, sad->tsid, &tcontext,
 				     &tcontext_len);
-#ifdef CONFIG_KSU_SUSFS
-	if (unlikely(sad->tsid == susfs_ksu_sid && susfs_is_avc_log_spoofing_enabled)) {
-		if (rc)
-			audit_log_format(ab, " tsid=%d", susfs_kernel_sid);
-		else
-			audit_log_format(ab, " tcontext=%s", "u:r:kernel:s0");
-		goto bypass_orig_flow;
-	}
-#endif
 	if (rc)
 		audit_log_format(ab, " tsid=%d", sad->tsid);
 	else
 		audit_log_format(ab, " tcontext=%s", tcontext);
-#ifdef CONFIG_KSU_SUSFS
-bypass_orig_flow:
-#endif
+
 	tclass = secclass_map[sad->tclass-1].name;
 	audit_log_format(ab, " tclass=%s", tclass);
 

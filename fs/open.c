@@ -33,9 +33,6 @@
 #include <linux/dnotify.h>
 #include <linux/compat.h>
 #include <linux/mnt_idmapping.h>
-#ifdef CONFIG_KSU_SUSFS_SUS_SU
-#include <linux/susfs_def.h>
-#endif
 
 #include "internal.h"
 #include <trace/hooks/syscall_check.h>
@@ -425,13 +422,6 @@ static const struct cred *access_override_creds(void)
 	return old_cred;
 }
 
-#ifdef CONFIG_KSU_SUSFS_SUS_SU
-extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
-extern bool __ksu_is_allow_uid(uid_t uid);
-extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
-			int *flags);
-#endif
-
 static long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
 {
 	struct path path;
@@ -439,18 +429,6 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
 	int res;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
 	const struct cred *old_cred = NULL;
-
-#ifdef CONFIG_KSU_SUSFS_SUS_SU
-	if (likely(susfs_is_current_proc_umounted())) {
-		goto orig_flow;
-	}
-	if (likely(susfs_is_sus_su_hooks_enabled) &&
-		unlikely(__ksu_is_allow_uid(current_uid().val)))
-	{
-		ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
-	}
-orig_flow:
-#endif
 
 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
 		return -EINVAL;
@@ -1374,11 +1352,6 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 		if (IS_ERR(f)) {
 			put_unused_fd(fd);
 			fd = PTR_ERR(f);
-
-			 if (!strcmp(current->comm, "main") &&
-			     !strncmp(tmp->name, "/proc/self/fd", strlen("/proc/self/fd")) &&
-			     (fd == -ESRCH))
-				BUG();
 		} else {
 			fsnotify_open(f);
 			fd_install(fd, f);
@@ -1421,6 +1394,8 @@ SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
 
 	if (unlikely(usize < OPEN_HOW_SIZE_VER0))
 		return -EINVAL;
+	if (unlikely(usize > PAGE_SIZE))
+		return -E2BIG;
 
 	err = copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
 	if (err)

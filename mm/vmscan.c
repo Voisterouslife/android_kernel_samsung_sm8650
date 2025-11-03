@@ -605,7 +605,14 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
 	if (can_reclaim_anon_pages(NULL, zone_to_nid(zone), NULL))
 		nr += zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_ANON) +
 			zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_ANON);
-
+	/*
+	 * If there are no reclaimable file-backed or anonymous pages,
+	 * ensure zones with sufficient free pages are not skipped.
+	 * This prevents zones like DMA32 from being ignored in reclaim
+	 * scenarios where they can still help alleviate memory pressure.
+	 */
+	if (nr == 0)
+		nr = zone_page_state_snapshot(zone, NR_FREE_PAGES);
 	return nr;
 }
 
@@ -809,6 +816,7 @@ static unsigned long do_shrink_slab(struct shrink_control *shrinkctl,
 
 	freeable = shrinker->count_objects(shrinker, shrinkctl);
 	trace_android_vh_do_shrink_slab(shrinker, &freeable);
+	trace_android_vh_do_shrink_slab_ex(shrinkctl, shrinker, &freeable, priority);
 	if (freeable == 0 || freeable == SHRINK_EMPTY)
 		return freeable;
 
@@ -2716,6 +2724,8 @@ static void shrink_active_list(unsigned long nr_to_scan,
 		}
 
 		trace_android_vh_page_referenced_check_bypass(folio, nr_to_scan, lru, &bypass);
+		trace_android_vh_folio_referenced_check_bypass(folio, sc->priority,
+					     nr_to_scan, lru, &bypass);
 		if (bypass)
 			goto skip_folio_referenced;
 		trace_android_vh_folio_trylock_set(folio);
@@ -2828,12 +2838,12 @@ unsigned long __reclaim_pages(struct list_head *folio_list, void *private)
 
 	return nr_reclaimed;
 }
-EXPORT_SYMBOL_GPL(reclaim_pages);
 
 unsigned long reclaim_pages(struct list_head *folio_list)
 {
 	return __reclaim_pages(folio_list, NULL);
 }
+EXPORT_SYMBOL_GPL(reclaim_pages);
 
 static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
 				 struct lruvec *lruvec, struct scan_control *sc)
@@ -3025,34 +3035,11 @@ enum mem_boost {
 static int mem_boost_mode = NO_BOOST;
 static unsigned long last_mode_change;
 static bool am_app_launch = false;
+static unsigned long low_threshold;
 
 #define MEM_BOOST_MAX_TIME (5 * HZ) /* 5 sec */
 
 #ifdef CONFIG_SYSFS
-#define MB_TO_PAGES(x) ((x) << (20 - PAGE_SHIFT))
-#define GB_TO_PAGES(x) ((x) << (30 - PAGE_SHIFT))
-static unsigned long low_threshold;
-
-static inline bool is_too_low_file(void)
-{
-	unsigned long pgdatfile;
-
-	if (!low_threshold) {
-		if (totalram_pages() > GB_TO_PAGES(4))
-			low_threshold = MB_TO_PAGES(500);
-		else if (totalram_pages() > GB_TO_PAGES(3))
-			low_threshold = MB_TO_PAGES(400);
-		else if (totalram_pages() > GB_TO_PAGES(2))
-			low_threshold = MB_TO_PAGES(300);
-		else
-			low_threshold = MB_TO_PAGES(200);
-	}
-
-	pgdatfile = global_node_page_state(NR_ACTIVE_FILE) +
-		    global_node_page_state(NR_INACTIVE_FILE);
-	return pgdatfile < low_threshold;
-}
-
 inline bool need_memory_boosting(void)
 {
 	if (time_after(jiffies, last_mode_change + MEM_BOOST_MAX_TIME))
@@ -3241,7 +3228,7 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	trace_android_rvh_set_balance_anon_file_reclaim(&balance_anon_file_reclaim);
 
 	if (current_is_kswapd() && need_memory_boosting() &&
-	    !is_too_low_file()) {
+	    !file_is_tiny(low_threshold)) {
 		scan_balance = SCAN_FILE;
 		goto out;
 	}
@@ -5419,7 +5406,6 @@ retry:
 
 		/* retry folios that may have missed folio_rotate_reclaimable() */
 		list_move(&folio->lru, &clean);
-		sc->nr_scanned -= folio_nr_pages(folio);
 	}
 
 	spin_lock_irq(&lruvec->lru_lock);
@@ -5676,6 +5662,7 @@ static void shrink_many(struct pglist_data *pgdat, struct scan_control *sc)
 	struct lru_gen_folio *lrugen = NULL;
 	struct mem_cgroup *memcg;
 	const struct hlist_nulls_node *pos;
+	bool bypass = false;
 
 	bin = first_bin = get_random_u32_below(MEMCG_NR_BINS);
 restart:
@@ -5701,6 +5688,10 @@ restart:
 			memcg = NULL;
 			continue;
 		}
+
+		trace_android_vh_should_memcg_bypass(memcg, sc->priority, &bypass);
+		if (bypass)
+			continue;
 
 		rcu_read_unlock();
 
@@ -5789,7 +5780,11 @@ static void set_initial_priority(struct pglist_data *pgdat, struct scan_control 
 	/* round down reclaimable and round up sc->nr_to_reclaim */
 	priority = fls_long(reclaimable) - 1 - fls_long(sc->nr_to_reclaim - 1);
 
-	sc->priority = clamp(priority, 0, DEF_PRIORITY);
+	/*
+	 * The estimation is based on LRU pages only, so cap it to prevent
+	 * overshoots of shrinker objects by large margins.
+	 */
+	sc->priority = clamp(priority, DEF_PRIORITY / 2, DEF_PRIORITY);
 }
 
 static void lru_gen_shrink_node(struct pglist_data *pgdat, struct scan_control *sc)
@@ -7337,7 +7332,7 @@ unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
 		.may_writepage = !laptop_mode,
 		.may_unmap = 1,
 #ifdef CONFIG_DIRECT_RECLAIM_FILE_PAGES_ONLY
-		.may_swap = 0,
+		.may_swap = file_is_tiny(low_threshold) ? 1 : 0,
 #else
 		.may_swap = 1,
 #endif
@@ -7602,6 +7597,7 @@ static bool kswapd_shrink_node(pg_data_t *pgdat,
 {
 	struct zone *zone;
 	int z;
+	unsigned long nr_reclaimed = sc->nr_reclaimed;
 
 	/* Reclaim a number of pages proportional to the number of zones */
 	sc->nr_to_reclaim = 0;
@@ -7629,7 +7625,8 @@ static bool kswapd_shrink_node(pg_data_t *pgdat,
 	if (sc->order && sc->nr_reclaimed >= compact_gap(sc->order))
 		sc->order = 0;
 
-	return sc->nr_scanned >= sc->nr_to_reclaim;
+	/* account for progress from mm_account_reclaimed_pages() */
+	return max(sc->nr_scanned, sc->nr_reclaimed - nr_reclaimed) >= sc->nr_to_reclaim;
 }
 
 /* Page allocator PCP high watermark is lowered if reclaim is active. */
@@ -8085,8 +8082,12 @@ kswapd_try_sleep:
 		 */
 		trace_mm_vmscan_kswapd_wake(pgdat->node_id, highest_zoneidx,
 						alloc_order);
+		trace_android_rvh_vmscan_kswapd_wake(pgdat->node_id, highest_zoneidx,
+						alloc_order);
 		reclaim_order = balance_pgdat(pgdat, alloc_order,
 						highest_zoneidx);
+		trace_android_rvh_vmscan_kswapd_done(pgdat->node_id, highest_zoneidx,
+						alloc_order, reclaim_order);
 		trace_android_vh_vmscan_kswapd_done(pgdat->node_id, highest_zoneidx,
 			       			alloc_order, reclaim_order);
 		if (reclaim_order < alloc_order)
@@ -8246,6 +8247,7 @@ static int __init kswapd_init(void)
 {
 	int nid;
 
+	low_threshold = get_low_threshold();
 #if CONFIG_KSWAPD_CPU
 	init_kswapd_cpumask();
 #endif

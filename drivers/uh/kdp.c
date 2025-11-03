@@ -438,12 +438,12 @@ static inline unsigned int cmp_sec_integrity(const struct cred *cred, struct mm_
 {
 	if (cred == &init_cred) {
 		if (init_cred_kdp.bp_task != current)
-			printk(KERN_ERR "[KDP] init_cred_kdp.bp_task: 0x%lx, current: 0x%lx\n",
-							(unsigned long) init_cred_kdp.bp_task, (unsigned long) current);
+			pr_err("[KDP] init_cred_kdp.bp_task: %p, current: %p\n",
+					init_cred_kdp.bp_task, current);
 
 		if (mm && (init_cred_kdp.bp_pgd != swapper_pg_dir) && (init_cred_kdp.bp_pgd != mm->pgd ))
-			printk(KERN_ERR "[KDP] mm: 0x%lx, init_cred_kdp.bp_pgd: 0x%lx, swapper_pg_dir: %p, mm->pgd: 0x%lx\n",
-							(unsigned long) mm, (unsigned long) init_cred_kdp.bp_pgd, swapper_pg_dir, (unsigned long) mm->pgd);
+			pr_err("[KDP] mm: %p, init_cred_kdp.bp_pgd: %p, swapper_pg_dir: %p, mm->pgd: %p\n",
+					mm, init_cred_kdp.bp_pgd, swapper_pg_dir, mm->pgd);
 
 		return ((init_cred_kdp.bp_task != current) ||
 				(mm && (!(in_interrupt() || in_softirq())) &&
@@ -451,13 +451,13 @@ static inline unsigned int cmp_sec_integrity(const struct cred *cred, struct mm_
 				(init_cred_kdp.bp_pgd != mm->pgd)));
 	} else {
 		if (((struct cred_kdp *)cred)->bp_task != current)
-			printk(KERN_ERR "[KDP] cred->bp_task: 0x%lx, current: 0x%lx\n",
-						(unsigned long) ((struct cred_kdp *)cred)->bp_task, (unsigned long) current);
+			pr_err("[KDP] cred->bp_task: %p, current: %p\n",
+				((struct cred_kdp *)cred)->bp_task, current);
 
 		if (mm && (((struct cred_kdp *)cred)->bp_pgd != swapper_pg_dir) &&
 			(((struct cred_kdp *)cred)->bp_pgd != mm->pgd))
-			printk(KERN_ERR "[KDP] mm: 0x%lx, cred->bp_pgd: 0x%lx, swapper_pg_dir: %p, mm->pgd: 0x%lx\n",
-							(unsigned long) mm, (unsigned long) ((struct cred_kdp *)cred)->bp_pgd, swapper_pg_dir, (unsigned long) mm->pgd);
+			pr_err("[KDP] mm: %p, cred->bp_pgd: %p, swapper_pg_dir: %p, mm->pgd: %p\n",
+				mm, ((struct cred_kdp *)cred)->bp_pgd, swapper_pg_dir, mm->pgd);
 
 		return ((((struct cred_kdp *)cred)->bp_task != current) ||
 				(mm && (!(in_interrupt() || in_softirq())) &&

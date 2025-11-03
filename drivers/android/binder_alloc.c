@@ -465,14 +465,14 @@ static struct binder_buffer *binder_alloc_new_buf_locked(
 	}
 
 #ifdef CONFIG_SAMSUNG_FREECESS
-	if (is_async && (alloc->free_async_space < 3*size
-		|| (alloc->free_async_space < alloc->buffer_size/4))) {
+	if (is_async && (alloc->free_async_space < 3 * size
+		|| alloc->free_async_space < alloc->buffer_size/4)) {
 		struct task_struct *p;
 
 		rcu_read_lock();
 		p = find_task_by_vpid(alloc->pid);
 		rcu_read_unlock();
-		if (p && (thread_group_is_frozen(p) || p->jobctl & JOBCTL_TRAP_FREEZE))
+		if (p && (thread_group_is_frozen(p) || cgroup2_frozen(p)))
 			binder_report(p, -1, "free_buffer_full", is_async);
 	}
 #endif
