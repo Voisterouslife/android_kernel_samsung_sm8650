@@ -2,7 +2,7 @@
 set -e
 
 MAIN_DEFCONFIG=pineapple_gki_defconfig
-LOCALVERSION_BASE=-android14-Elaina-Happy_Every_Day
+LOCALVERSION_BASE=-Elaina-Happy_Every_Day
 
 TOOLCHAIN=$(realpath "$GITHUB_WORKSPACE/prebuilts")
 ANYKERNEL_REPO="https://github.com/Voisterouslife/AnyKernel3.git"
