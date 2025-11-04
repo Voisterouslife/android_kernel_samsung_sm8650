@@ -75,7 +75,7 @@ jobs:
       - name: Download and apply SukiSU patch
         run: |
           echo "--- 正在下载 SukiSU 补丁 ---"
-          wget -O suki.patch https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/hooks/scope_min_manual_hooks_v1.5.patch
+          wget -O suki.patch https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/hooks/scope_min_manual_hooks_v1.6.patch
           echo "--- 正在应用 SukiSU 补丁 ---"
           patch -p1 < suki.patch
 
