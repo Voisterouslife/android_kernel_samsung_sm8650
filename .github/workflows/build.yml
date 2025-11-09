@@ -42,14 +42,14 @@ jobs:
         run: |
           PART1_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.00"
           PART2_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.01"
-          
+
           echo "--- 正在从 Release 下载编译链分卷 ---"
           wget $PART1_URL
           wget $PART2_URL
-          
+
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           tar -xzf toolchain.tar.gz
-       
+
           echo "--- 编译链已解压到 prebuilts/ ---"
 
       - name: Cache ccache
@@ -71,13 +71,6 @@ jobs:
       - name: Download and install SukiSU
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-          
-      - name: Download and apply SukiSU patch
-        run: |
-          echo "--- 正在下载 SukiSU 补丁 ---"
-          wget -O suki.patch https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/hooks/scope_min_manual_hooks_v1.6.patch
-          echo "--- 正在应用 SukiSU 补丁 ---"
-          patch -p1 < suki.patch
 
       - name: Run Baseband-guard setup script
         run: |
@@ -88,7 +81,7 @@ jobs:
           SCRIPT_PATH=".github/workflows/state/build.sh"
           chmod +x "$SCRIPT_PATH"
           "$SCRIPT_PATH"
-      
+
       - name: Show ccache stats
         run: |
           echo "--- Ccache 统计信息 ---"
@@ -101,7 +94,7 @@ jobs:
           path: |
             out/*.zip
             out/*.img
-            
+
       - name: Get uploaded file paths
         id: get_file_paths
         if: ${{ github.event.inputs.create_release == 'true' }}
