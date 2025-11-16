@@ -42,14 +42,11 @@ jobs:
         run: |
           PART1_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.00"
           PART2_URL="https://github.com/Voisterouslife/android_kernel_samsung_sm8650/releases/download/toolchain/toolchain.tar.gz.01"
-
-          echo "--- 正在从 Release 下载编译链分卷 ---"
           wget $PART1_URL
           wget $PART2_URL
-
           cat toolchain.tar.gz.00 toolchain.tar.gz.01 > toolchain.tar.gz
           tar -xzf toolchain.tar.gz
-
+          rm -f toolchain.tar.gz.00 toolchain.tar.gz.01 toolchain.tar.gz
           echo "--- 编译链已解压到 prebuilts/ ---"
 
       - name: Cache ccache
