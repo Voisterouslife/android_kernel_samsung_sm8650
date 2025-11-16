@@ -18,9 +18,6 @@
 #include <linux/syscalls.h>
 #include <linux/syscore_ops.h>
 #include <linux/uaccess.h>
-#ifdef CONFIG_KSU_SUSFS
-#include <linux/susfs.h>
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 #include <trace/hooks/reboot.h>
 
@@ -701,11 +698,6 @@ EXPORT_SYMBOL_GPL(kernel_power_off);
 
 DEFINE_MUTEX(system_transition_mutex);
 
-#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-__attribute__((hot))
-extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
-#endif
-
 #ifdef CONFIG_KSU_SUSFS
 extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
 #endif
@@ -723,10 +715,6 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 	struct pid_namespace *pid_ns = task_active_pid_ns(current);
 	char buffer[256];
 	int ret = 0;
-
-#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-       ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
-#endif
 
 #ifdef CONFIG_KSU_SUSFS
 	ret = ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
