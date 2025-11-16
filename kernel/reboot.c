@@ -18,6 +18,9 @@
 #include <linux/syscalls.h>
 #include <linux/syscore_ops.h>
 #include <linux/uaccess.h>
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+#endif // #ifdef CONFIG_KSU_SUSFS
 
 #include <trace/hooks/reboot.h>
 
@@ -703,6 +706,9 @@ __attribute__((hot))
 extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
 #endif
 
+#ifdef CONFIG_KSU_SUSFS
+extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user **arg);
+#endif
 /*
  * Reboot system call: for obvious reasons only root may call it,
  * and even root needs to set up some magic numbers in the registers
@@ -720,6 +726,15 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 
 #if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
        ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
+#endif
+
+#ifdef CONFIG_KSU_SUSFS
+	ret = ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
+	if (ret) {
+		goto orig_flow;
+	}
+	return ret;
+orig_flow:
 #endif
 
 	/* We only trust the superuser with rebooting the system. */
