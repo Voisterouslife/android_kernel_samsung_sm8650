@@ -1,5 +1,4 @@
-.
-0#
+#
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 6.1.128 Kernel Configuration
 #
@@ -26,7 +25,6 @@ CONFIG_THREAD_INFO_IN_TASK=y
 CONFIG_KSU=y
 CONFIG_KSU_SUSFS=y
 config_KSU_SUSFS_SUS_PATH=y
-CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y
 config_KSU_SUSFS_SUS_MOUNT=y
 config_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y
 config_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y

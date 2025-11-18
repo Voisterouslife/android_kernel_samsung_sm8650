@@ -544,47 +544,49 @@ index 1fa36df7b667..e997ba39c615 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 67d89ebb5044..f54607000a84 100644
+index 67d89ebb5044..cdd82a316fcb 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -32,10 +32,36 @@
+@@ -32,10 +32,38 @@
  #include <linux/fs_context.h>
  #include <linux/shmem_fs.h>
  #include <linux/mnt_idmapping.h>
-+#if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
++#if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT)
 +#include <linux/susfs_def.h>
 +#endif
  
  #include "pnode.h"
  #include "internal.h"
  
-+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++#if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT)
 +extern bool susfs_is_current_ksu_domain(void);
 +extern bool susfs_is_current_zygote_domain(void);
 +extern bool susfs_is_boot_completed_triggered;
++#endif // #if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT)
 +
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +static DEFINE_IDA(susfs_ksu_mnt_group_ida);
 +
 +#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +
 +#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
 +extern void susfs_auto_add_sus_ksu_default_mount(const char __user *to_pathname);
 +bool susfs_is_auto_add_sus_ksu_default_mount_enabled = true;
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
 +#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
 +extern void susfs_auto_add_sus_bind_mount(const char *pathname, struct path *path_target);
 +bool susfs_is_auto_add_sus_bind_mount_enabled = true;
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
 +#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 +extern void susfs_auto_add_try_umount_for_bind_mount(struct path *path);
 +bool susfs_is_auto_add_try_umount_for_bind_mount_enabled = true;
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 +
  /* Maximum number of mounts in a mount namespace */
  static unsigned int sysctl_mount_max __read_mostly = 100000;
  
-@@ -135,6 +161,20 @@ static int mnt_alloc_id(struct mount *mnt)
+@@ -135,6 +163,20 @@ static int mnt_alloc_id(struct mount *mnt)
  
  static void mnt_free_id(struct mount *mnt)
  {
@@ -605,7 +607,7 @@ index 67d89ebb5044..f54607000a84 100644
  	ida_free(&mnt_id_ida, mnt->mnt_id);
  }
  
-@@ -143,7 +183,23 @@ static void mnt_free_id(struct mount *mnt)
+@@ -143,7 +185,23 @@ static void mnt_free_id(struct mount *mnt)
   */
  static int mnt_alloc_group_id(struct mount *mnt)
  {
@@ -629,7 +631,7 @@ index 67d89ebb5044..f54607000a84 100644
  
  	if (res < 0)
  		return res;
-@@ -156,6 +212,22 @@ static int mnt_alloc_group_id(struct mount *mnt)
+@@ -156,6 +214,22 @@ static int mnt_alloc_group_id(struct mount *mnt)
   */
  void mnt_release_group_id(struct mount *mnt)
  {
@@ -652,7 +654,7 @@ index 67d89ebb5044..f54607000a84 100644
  	ida_free(&mnt_group_ida, mnt->mnt_group_id);
  	mnt->mnt_group_id = 0;
  }
-@@ -193,6 +265,112 @@ int mnt_get_count(struct mount *mnt)
+@@ -193,6 +267,112 @@ int mnt_get_count(struct mount *mnt)
  #endif
  }
  
@@ -765,7 +767,7 @@ index 67d89ebb5044..f54607000a84 100644
  static struct mount *alloc_vfsmnt(const char *name)
  {
  	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
-@@ -220,6 +398,10 @@ static struct mount *alloc_vfsmnt(const char *name)
+@@ -220,6 +400,10 @@ static struct mount *alloc_vfsmnt(const char *name)
  		mnt->mnt_count = 1;
  		mnt->mnt_writers = 0;
  #endif
@@ -776,7 +778,7 @@ index 67d89ebb5044..f54607000a84 100644
  
  		INIT_HLIST_NODE(&mnt->mnt_hash);
  		INIT_LIST_HEAD(&mnt->mnt_child);
-@@ -1010,7 +1192,18 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
+@@ -1010,7 +1194,18 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
  	if (!fc->root)
  		return ERR_PTR(-EINVAL);
  
@@ -795,7 +797,7 @@ index 67d89ebb5044..f54607000a84 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -1097,7 +1290,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
+@@ -1097,7 +1292,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
  	struct mount *mnt;
  	int err;
  
@@ -833,7 +835,7 @@ index 67d89ebb5044..f54607000a84 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -2457,6 +2680,23 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2457,6 +2682,23 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -857,7 +859,7 @@ index 67d89ebb5044..f54607000a84 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3495,6 +3735,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3495,6 +3737,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -867,7 +869,7 @@ index 67d89ebb5044..f54607000a84 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3608,6 +3851,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+@@ -3608,6 +3853,15 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
  
@@ -883,7 +885,7 @@ index 67d89ebb5044..f54607000a84 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -3830,6 +4082,15 @@ SYSCALL_DEFINE5(move_mount,
+@@ -3830,6 +4084,15 @@ SYSCALL_DEFINE5(move_mount,
  	path_put(&to_path);
  out_from:
  	path_put(&from_path);
@@ -899,7 +901,7 @@ index 67d89ebb5044..f54607000a84 100644
  	return ret;
  }
  
-@@ -4742,3 +5003,52 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -4742,3 +5005,52 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
@@ -2201,7 +2203,7 @@ index 9f8f4c1ccc65..7f2e512f99d9 100644
  	if (copy_to_user(name, &tmp, sizeof(tmp)))
  		return -EFAULT;
 diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index d93af92498f5..0b0957c8c304 100644
+index d93af92498f5..15e526609b62 100644
 --- a/security/selinux/avc.c
 +++ b/security/selinux/avc.c
 @@ -47,6 +47,12 @@
@@ -2210,7 +2212,7 @@ index d93af92498f5..0b0957c8c304 100644
  
 +#ifdef CONFIG_KSU_SUSFS
 +extern u32 susfs_ksu_sid;
-+extern u32 susfs_kernel_sid;
++extern u32 susfs_priv_app_sid;
 +bool susfs_is_avc_log_spoofing_enabled = false;
 +#endif
 +
@@ -2224,9 +2226,9 @@ index d93af92498f5..0b0957c8c304 100644
 +#ifdef CONFIG_KSU_SUSFS
 +	if (unlikely(sad->tsid == susfs_ksu_sid && susfs_is_avc_log_spoofing_enabled)) {
 +		if (rc)
-+			audit_log_format(ab, " tsid=%d", susfs_kernel_sid);
++			audit_log_format(ab, " tsid=%d", susfs_priv_app_sid);
 +		else
-+			audit_log_format(ab, " tcontext=%s", "u:r:kernel:s0");
++			audit_log_format(ab, " tcontext=%s", "u:r:priv_app:s0:c512,c768");
 +		goto bypass_orig_flow;
 +	}
 +#endif
