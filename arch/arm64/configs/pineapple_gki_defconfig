@@ -39,6 +39,7 @@ config_KSU_SUSFS_OPEN_REDIRECT=y
 config_KSU_SUSFS_SUS_MAP=y
 CONFIG_KPM=y
 CONFIG_BBG=y
+CONFIG_TMPFS_XATTR=y
 #
 # General setup
 #
