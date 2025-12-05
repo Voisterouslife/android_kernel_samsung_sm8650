@@ -84,7 +84,7 @@ jobs:
       - name: Download and install SukiSU
         if: matrix.enable_sukisu == 'true'
         run: |
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
 
       - name: Run Baseband-guard setup script
         run: |
