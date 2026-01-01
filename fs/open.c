@@ -426,6 +426,7 @@ static const struct cred *access_override_creds(void)
 }
 
 #ifdef CONFIG_KSU_SUSFS
+extern bool ksu_su_compat_enabled __read_mostly;
 extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 			int *flags);
@@ -440,7 +441,7 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
 	const struct cred *old_cred = NULL;
 
 #ifdef CONFIG_KSU_SUSFS
-	if (likely(susfs_is_current_proc_umounted())) {
+	if (likely(susfs_is_current_proc_umounted()) || !ksu_su_compat_enabled) {
 		goto orig_flow;
 	}
 

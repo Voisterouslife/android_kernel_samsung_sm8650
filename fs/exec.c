@@ -1905,6 +1905,7 @@ out_unmark:
 
 #ifdef CONFIG_KSU_SUSFS
 extern bool ksu_execveat_hook __read_mostly;
+extern bool ksu_su_compat_enabled __read_mostly;
 extern bool susfs_is_boot_completed_triggered __read_mostly;
 extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
@@ -1925,7 +1926,7 @@ static int do_execveat_common(int fd, struct filename *filename,
 		return PTR_ERR(filename);
 
 #ifdef CONFIG_KSU_SUSFS
-	if (likely(susfs_is_current_proc_umounted())) {
+	if (likely(susfs_is_current_proc_umounted()) || !ksu_su_compat_enabled) {
 		goto orig_flow;
 	}
 
