@@ -27,7 +27,7 @@ jobs:
           STATE_FILE=".github/workflows/state/sukisu_commits.json"
 
           UPSTREAM_REPO_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
-          UPSTREAM_BRANCH="tmp-builtin"
+          UPSTREAM_BRANCH="builtin"
           
           echo "--- Fetching latest commit from SukiSU-Ultra (branch: $UPSTREAM_BRANCH) ---"
           LATEST_COMMIT=$(git ls-remote "$UPSTREAM_REPO_URL" "$UPSTREAM_BRANCH" | cut -f1)
