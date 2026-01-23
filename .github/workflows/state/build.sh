@@ -74,7 +74,7 @@ cd AnyKernel3
 
 if [ "$ENABLE_SUKISU" = "true" ]; then
     echo "--- [SukiSU Mode] 正在下载并运行 patch_linux ---"
-    wget -O patch_linux "https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.2/patch_linux"
+    wget -O patch_linux "https://github.com/SukiSU-Ultra/SukiSU_patch/raw/refs/heads/main/kpm/patch_linux"
     if [ $? -ne 0 ]; then
         echo "错误: 下载 patch_linux 失败！"
         exit 1
