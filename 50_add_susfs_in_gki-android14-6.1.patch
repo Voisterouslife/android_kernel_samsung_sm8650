@@ -81,7 +81,7 @@ index 4f25015aa534..17e9e15af730 100644
  		return NULL;
  	return dentry->d_fsdata;
 diff --git a/fs/exec.c b/fs/exec.c
-index 05ec9e6966cf..516d40054eef 100644
+index 05ec9e6966cf..bc8676ad4f55 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
 @@ -64,6 +64,9 @@
@@ -101,7 +101,7 @@ index 05ec9e6966cf..516d40054eef 100644
 +#ifdef CONFIG_KSU_SUSFS
 +extern bool ksu_execveat_hook __read_mostly;
 +extern bool ksu_su_compat_enabled __read_mostly;
-+extern bool susfs_is_boot_completed_triggered __read_mostly;
++extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 +extern bool __ksu_is_allow_uid_for_current(uid_t uid);
 +extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
 +			void *envp, int *flags);
@@ -121,7 +121,7 @@ index 05ec9e6966cf..516d40054eef 100644
 +		goto orig_flow;
 +	}
 +
-+	if (unlikely(ksu_execveat_hook || !susfs_is_boot_completed_triggered)) {
++	if (unlikely(ksu_execveat_hook || !susfs_is_sdcard_android_data_decrypted)) {
 +		ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
 +	} else if ((__ksu_is_allow_uid_for_current(current_uid().val))) {
 +		ksu_handle_execveat_sucompat(&fd, &filename, &argv, &envp, &flags);
@@ -546,10 +546,10 @@ index 1fa36df7b667..e997ba39c615 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 67d89ebb5044..d6206aaddf7a 100644
+index 67d89ebb5044..ab99ef0414cb 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -32,10 +32,23 @@
+@@ -32,10 +32,22 @@
  #include <linux/fs_context.h>
  #include <linux/shmem_fs.h>
  #include <linux/mnt_idmapping.h>
@@ -562,9 +562,8 @@ index 67d89ebb5044..d6206aaddf7a 100644
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +extern bool susfs_is_current_ksu_domain(void);
-+extern bool susfs_is_boot_completed_triggered __read_mostly;
++extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 +
-+static DEFINE_IDA(susfs_ksu_mnt_group_ida);
 +static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
 +
 +#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
@@ -573,7 +572,7 @@ index 67d89ebb5044..d6206aaddf7a 100644
  /* Maximum number of mounts in a mount namespace */
  static unsigned int sysctl_mount_max __read_mostly = 100000;
  
-@@ -135,6 +148,20 @@ static int mnt_alloc_id(struct mount *mnt)
+@@ -135,6 +147,20 @@ static int mnt_alloc_id(struct mount *mnt)
  
  static void mnt_free_id(struct mount *mnt)
  {
@@ -594,22 +593,24 @@ index 67d89ebb5044..d6206aaddf7a 100644
  	ida_free(&mnt_id_ida, mnt->mnt_id);
  }
  
-@@ -143,7 +170,23 @@ static void mnt_free_id(struct mount *mnt)
+@@ -143,7 +169,25 @@ static void mnt_free_id(struct mount *mnt)
   */
  static int mnt_alloc_group_id(struct mount *mnt)
  {
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	int res;
 +
-+	/* - At frist susfs_is_boot_completed_triggered is set to false in kernel,
-+	 *   and it is still allowed to assign our custom mnt_group_id via susfs_ksu_mnt_group_ida
-+	 *   if it is ksu mounts, until susfs_is_boot_completed_triggered is set to true
-+	 *   when boot-completed stage is triggered in core_hook.c 
++	/* - mnt_alloc_group_id will unlikely get called after screen is unlocked on reboot,
++	 *   so here we can persistently check if current is ksu domain, and assign a sus
++	 *   mnt_group_id if so.
++	 * - Also we can re-use the original mnt_group_ida so there is no need to use
++	 *   another ida nor hook the mnt_release_group_id() function.
 +	 */
-+	if (!susfs_is_boot_completed_triggered && mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
-+		res = ida_alloc_min(&susfs_ksu_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
++	if (susfs_is_current_ksu_domain()) {
++		res = ida_alloc_min(&mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
 +		goto bypass_orig_flow;
 +	}
++
 +	res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
 +bypass_orig_flow:
 +#else
@@ -618,30 +619,7 @@ index 67d89ebb5044..d6206aaddf7a 100644
  
  	if (res < 0)
  		return res;
-@@ -156,6 +199,22 @@ static int mnt_alloc_group_id(struct mount *mnt)
-  */
- void mnt_release_group_id(struct mount *mnt)
- {
-+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-+	/* - when boot-completed stage is triggered in core_hook.c,
-+	 *   susfs_is_boot_completed_triggered will be set to true.
-+	 * - Please note that if susfs_is_boot_completed_triggered is true, then
-+	 *   it no longer checks for the sus mnt_group_id, and the allocated
-+	 *   sus mnt_group_id will stay in kernel memory forever, and if user
-+	 *   suddenly umounts the sus mount in global mnt namespace, the ida_free()
-+	 *   function will throw error to kernel log, but it won't affect the system,
-+	 *   so it is fine.
-+	 */
-+	if (!susfs_is_boot_completed_triggered && mnt->mnt_group_id >= DEFAULT_KSU_MNT_GROUP_ID) {
-+		ida_free(&susfs_ksu_mnt_group_ida, mnt->mnt_group_id);
-+		mnt->mnt_group_id = 0;
-+		return;
-+	}
-+#endif
- 	ida_free(&mnt_group_ida, mnt->mnt_group_id);
- 	mnt->mnt_group_id = 0;
- }
-@@ -193,6 +252,112 @@ int mnt_get_count(struct mount *mnt)
+@@ -193,6 +237,112 @@ int mnt_get_count(struct mount *mnt)
  #endif
  }
  
@@ -754,7 +732,7 @@ index 67d89ebb5044..d6206aaddf7a 100644
  static struct mount *alloc_vfsmnt(const char *name)
  {
  	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
-@@ -220,6 +385,10 @@ static struct mount *alloc_vfsmnt(const char *name)
+@@ -220,6 +370,10 @@ static struct mount *alloc_vfsmnt(const char *name)
  		mnt->mnt_count = 1;
  		mnt->mnt_writers = 0;
  #endif
@@ -765,13 +743,13 @@ index 67d89ebb5044..d6206aaddf7a 100644
  
  		INIT_HLIST_NODE(&mnt->mnt_hash);
  		INIT_LIST_HEAD(&mnt->mnt_child);
-@@ -1010,7 +1179,19 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
+@@ -1010,7 +1164,19 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
  	if (!fc->root)
  		return ERR_PTR(-EINVAL);
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	// We keep checking for ksu process only until boot-completed stage is triggered
-+	if (!susfs_is_boot_completed_triggered && susfs_is_current_ksu_domain()) {
++	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
 +		mnt = susfs_alloc_sus_vfsmnt(fc->source ?: "none");
 +		atomic64_add(1, &susfs_ksu_mounts);
 +		goto bypass_orig_flow;
@@ -785,14 +763,14 @@ index 67d89ebb5044..d6206aaddf7a 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -1097,7 +1278,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
+@@ -1097,7 +1263,37 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
  	struct mount *mnt;
  	int err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	// - We do not check anymore for ksu process if boot-completed stage is triggered
 +	//   just to stop the performance loss
-+	if (susfs_is_boot_completed_triggered) {
++	if (susfs_is_sdcard_android_data_decrypted) {
 +		goto skip_checking_for_ksu_proc;
 +	}
 +
@@ -823,7 +801,7 @@ index 67d89ebb5044..d6206aaddf7a 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -3495,6 +3706,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3495,6 +3691,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
@@ -833,7 +811,7 @@ index 67d89ebb5044..d6206aaddf7a 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -4742,3 +4956,36 @@ static int __init init_fs_namespace_sysctls(void)
+@@ -4742,3 +4941,36 @@ static int __init init_fs_namespace_sysctls(void)
  fs_initcall(init_fs_namespace_sysctls);
  
  #endif /* CONFIG_SYSCTL */
