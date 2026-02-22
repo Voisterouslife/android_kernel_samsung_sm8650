@@ -27,9 +27,9 @@ jobs:
           - branch: "main"
             name: "Original"
 
-          - branch: "SukiSU"
+          - branch: "SukiSUUltra"
             name: "SukiSU"
-            enable_sukisu: "true"
+            enable_sukisuultra: "true"
 
           - branch: "SukiSU"
             name: "ReSukiSU"
@@ -91,7 +91,7 @@ jobs:
           ccache -z 
 
       - name: Download and install SukiSU
-        if: matrix.enable_sukisu == 'true'
+        if: matrix.enable_sukisuultra == 'true'
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
 
@@ -106,7 +106,7 @@ jobs:
 
       - name: Run kernel build script
         env:
-          ENABLE_SUKISU: ${{ matrix.enable_sukisu }}
+          ENABLE_SUKISUUltra: ${{ matrix.enable_sukisuultra }}
           ENABLE_RESUKISU: ${{ matrix.enable_resukisu }}
         run: |
           SCRIPT_PATH=".github/workflows/state/build.sh"
