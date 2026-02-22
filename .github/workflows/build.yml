@@ -27,10 +27,17 @@ jobs:
           - branch: "main"
             name: "Original"
             enable_sukisu: "false"
+            enable_resukisu: "false"
           
           - branch: "SukiSUUltra" 
             name: "SukiSU"
             enable_sukisu: "true"
+            enable_resukisu: "false"
+
+          - branch: "ReSukiSU" 
+            name: "ReSukiSU"
+            enable_sukisu: "false"
+            enable_resukisu: "true"
 
     steps:
       - name: Checkout code
@@ -38,6 +45,12 @@ jobs:
         with:
           ref: ${{ matrix.branch }} 
           fetch-depth: 1
+
+      - name: Fetch build script from main
+        run: |
+          echo "--- 正在从 main 分支单独获取 build.sh ---"
+          git fetch origin main --depth=1
+          git checkout origin/main -- .github/workflows/state/build.sh
 
       - name: Set up build environment
         run: |
@@ -86,6 +99,11 @@ jobs:
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
 
+      - name: Download and install ReSukiSU
+        if: matrix.enable_resukisu == 'true'
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s main
+
       - name: Run Baseband-guard setup script
         run: |
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
@@ -93,6 +111,7 @@ jobs:
       - name: Run kernel build script
         env:
           ENABLE_SUKISU: ${{ matrix.enable_sukisu }}
+          ENABLE_RESUKISU: ${{ matrix.enable_resukisu }}
         run: |
           SCRIPT_PATH=".github/workflows/state/build.sh"
           chmod +x "$SCRIPT_PATH"
@@ -103,6 +122,17 @@ jobs:
           echo "--- Ccache 统计信息 ---"
           ccache -s
 
+      - name: Rename Output Files
+        run: |
+          echo "--- 正在重命名输出文件 ---"
+          cd out/
+          for file in *.zip *.img; do
+            if [ -f "$file" ]; then
+              mv "$file" "【${{ matrix.name }}】$file"
+              echo "已重命名: $file -> 【${{ matrix.name }}】$file"
+            fi
+          done
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -111,32 +141,40 @@ jobs:
             out/*.zip
             out/*.img
 
-      - name: Get uploaded file paths
-        id: get_file_paths
-        if: ${{ github.event.inputs.create_release == 'true' }}
-        run: |
-          ZIP_FILE=$(find out/ -maxdepth 1 -name "*.zip" | head -n 1)
-          IMG_FILE=$(find out/ -maxdepth 1 -name "*.img" | head -n 1)
-          
-          echo "zip_path=$ZIP_FILE" >> $GITHUB_OUTPUT
-          echo "img_path=$IMG_FILE" >> $GITHUB_OUTPUT
-          echo "已获取 ZIP 文件路径: $ZIP_FILE"
-          echo "已获取 IMG 文件路径: $IMG_FILE"
+  release:
+    needs: build
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: S24-Kernel-*-Artifacts
+          merge-multiple: true
+          path: release-files/
 
-      - name: Create and Upload Release
-        if: ${{ github.event.inputs.create_release == 'true' }}
+      - name: Display downloaded files
+        run: |
+          echo "--- 准备打包上传的文件列表 ---"
+          ls -la release-files/
+
+      - name: Create and Upload Unified Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            ${{ steps.get_file_paths.outputs.zip_path }}
-            ${{ steps.get_file_paths.outputs.img_path }}
-          tag_name: S24U_${{ matrix.name }}_Build_${{ github.run_number }}
-          name: 'S24U ${{ matrix.name }} Release (Build ${{ github.run_number }})'
+          files: release-files/*
+          tag_name: S24U_Unified_Build_${{ github.run_number }}
+          name: 'S24U Kernel Unified Release (Build ${{ github.run_number }})'
           body: |
-            Branch: ${{ matrix.branch }}
-            - Build number: ${{ github.run_number }}
-            - BBG Support
-            ${{ matrix.enable_sukisu == 'true' && '- KPM Enable (SukiSU)' || '- Original Kernel' }}
+            ### 🚀 S24U Kernel Build #${{ github.run_number }}
+            
+            本 Release 包含以下多个版本的内核镜像及刷机包，请根据文件前缀按需下载：
+            - **【Original】**: 原版内核
+            - **【SukiSU】**: 集成 SukiSU (KPM Enabled)
+            - **【ReSukiSU】**: 集成 ReSukiSU (KPM Disabled)
+            
+            *默认均已集成 Baseband-guard 支持。*
           prerelease: ${{ github.event.inputs.is_pre_release }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
