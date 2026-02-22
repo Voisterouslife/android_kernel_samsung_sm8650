@@ -25,7 +25,7 @@ jobs:
         id: discover
         run: |
           STATE_FILE=".github/workflows/state/upstream_commits.json"
-
+          
           mkdir -p "$(dirname "$STATE_FILE")"
           if [ ! -f "$STATE_FILE" ]; then
             echo "{}" > "$STATE_FILE"
