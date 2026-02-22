@@ -26,17 +26,13 @@ jobs:
         include:
           - branch: "main"
             name: "Original"
-            enable_sukisu: "false"
-            enable_resukisu: "false"
-          
-          - branch: "SukiSUUltra" 
+
+          - branch: "SukiSU"
             name: "SukiSU"
             enable_sukisu: "true"
-            enable_resukisu: "false"
 
-          - branch: "ReSukiSU" 
+          - branch: "SukiSU"
             name: "ReSukiSU"
-            enable_sukisu: "false"
             enable_resukisu: "true"
 
     steps:
@@ -171,8 +167,8 @@ jobs:
             
             本 Release 包含以下多个版本的内核镜像及刷机包，请根据文件前缀按需下载：
             - **【Original】**: 原版内核
-            - **【SukiSU】**: 集成 SukiSU (KPM Enabled)
-            - **【ReSukiSU】**: 集成 ReSukiSU (KPM Disabled)
+            - **【SukiSUUltra】**: 集成 SukiSUUltra
+            - **【ReSukiSU】**: 集成 ReSukiSU
             
             *默认均已集成 Baseband-guard 支持。*
           prerelease: ${{ github.event.inputs.is_pre_release }}
