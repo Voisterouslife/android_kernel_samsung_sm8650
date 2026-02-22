@@ -27,7 +27,7 @@ jobs:
           - branch: "main"
             name: "Original"
 
-          - branch: "SukiSUUltra"
+          - branch: "SukiSU"
             name: "SukiSU-Ultra"
             enable_sukisuultra: "true"
 
