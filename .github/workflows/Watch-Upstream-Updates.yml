@@ -32,11 +32,11 @@ jobs:
             echo "--- Created new state file: $STATE_FILE ---"
           fi
 
-          SUKISU_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
-          SUKISU_BRANCH="builtin"
-          echo "--- Fetching latest commit from SukiSU-Ultra (branch: $SUKISU_BRANCH) ---"
-          SUKISU_LATEST=$(git ls-remote "$SUKISU_URL" "$SUKISU_BRANCH" | cut -f1)
-          SUKISU_KNOWN=$(jq -r '.sukisuultra // empty' "$STATE_FILE")
+          SUKISU_ULTRA_URL="https://github.com/SukiSU-Ultra/SukiSU-Ultra.git"
+          SUKISU_ULTRA_BRANCH="builtin"
+          echo "--- Fetching latest commit from SukiSU-Ultra (branch: $SUKISU_ULTRA_BRANCH) ---"
+          SUKISU_ULTRA_LATEST=$(git ls-remote "$SUKISU_ULTRA_URL" "$SUKISU_ULTRA_BRANCH" | cut -f1)
+          SUKISU_ULTRA_KNOWN=$(jq -r '.sukisu_ultra // empty' "$STATE_FILE")
 
           RESUKISU_URL="https://github.com/ReSukiSU/ReSukiSU.git"
           RESUKISU_BRANCH="main"
@@ -44,10 +44,10 @@ jobs:
           RESUKISU_LATEST=$(git ls-remote "$RESUKISU_URL" "$RESUKISU_BRANCH" | cut -f1)
           RESUKISU_KNOWN=$(jq -r '.resukisu // empty' "$STATE_FILE")
 
-          echo "SukiSU-Ultra - Latest: $SUKISU_LATEST, Known: ${SUKISU_KNOWN:-None}"
+          echo "SukiSU-Ultra - Latest: $SUKISU_ULTRA_LATEST, Known: ${SUKISU_ULTRA_KNOWN:-None}"
           echo "ReSukiSU     - Latest: $RESUKISU_LATEST, Known: ${RESUKISU_KNOWN:-None}"
 
-          if [ -z "$SUKISU_LATEST" ] || [ -z "$RESUKISU_LATEST" ]; then
+          if [ -z "$SUKISU_ULTRA_LATEST" ] || [ -z "$RESUKISU_LATEST" ]; then
             echo "--- Failed to get latest commit from upstreams. Exiting. ---"
             exit 1
           fi
@@ -55,10 +55,10 @@ jobs:
           NEW_UPDATES=false
           COMMIT_MSG="chore: Update upstreams"
 
-          if [ "$SUKISU_LATEST" != "$SUKISU_KNOWN" ]; then
+          if [ "$SUKISU_ULTRA_LATEST" != "$SUKISU_ULTRA_KNOWN" ]; then
             echo "--- New SukiSU-Ultra commit found. ---"
             NEW_UPDATES=true
-            COMMIT_MSG="$COMMIT_MSG (SukiSU-Ultra: ${SUKISU_LATEST:0:7})"
+            COMMIT_MSG="$COMMIT_MSG (SukiSU-Ultra: ${SUKISU_ULTRA_LATEST:0:7})"
           fi
 
           if [ "$RESUKISU_LATEST" != "$RESUKISU_KNOWN" ]; then
@@ -69,7 +69,7 @@ jobs:
 
           if [ "$NEW_UPDATES" = true ]; then
             echo "new_commit_found=true" >> $GITHUB_OUTPUT
-            echo "sukisu_latest=$SUKISU_LATEST" >> $GITHUB_OUTPUT
+            echo "sukisu_ultra_latest=$SUKISU_ULTRA_LATEST" >> $GITHUB_OUTPUT
             echo "resukisu_latest=$RESUKISU_LATEST" >> $GITHUB_OUTPUT
             echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
           else
@@ -82,7 +82,7 @@ jobs:
         if: steps.discover.outputs.new_commit_found == 'true'
         run: |
           STATE_FILE=".github/workflows/state/upstream_commits.json"
-          SUKISU_LATEST=${{ steps.discover.outputs.sukisu_latest }}
+          SUKISU_ULTRA_LATEST=${{ steps.discover.outputs.sukisu_ultra_latest }}
           RESUKISU_LATEST=${{ steps.discover.outputs.resukisu_latest }}
           COMMIT_MSG="${{ steps.discover.outputs.commit_msg }}"
           
@@ -98,9 +98,9 @@ jobs:
           fi
           
           echo "--- Updating $STATE_FILE with new hashes ---"
-          jq --arg S_COMMIT "$SUKISU_LATEST" \
+          jq --arg S_COMMIT "$SUKISU_ULTRA_LATEST" \
              --arg R_COMMIT "$RESUKISU_LATEST" \
-             '.sukisuultra = $S_COMMIT | .resukisu = $R_COMMIT' \
+             '.sukisu_ultra = $S_COMMIT | .resukisu = $R_COMMIT' \
              "$STATE_FILE" > tmp.json && mv tmp.json "$STATE_FILE"
           
           git add "$STATE_FILE"
