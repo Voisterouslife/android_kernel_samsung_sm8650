@@ -55,7 +55,6 @@ BUILD_TIME=$((BUILD_END - BUILD_START))
 echo -e "\n--- 内核编译成功！耗时: ${BUILD_TIME} 秒 ---\n"
 
 echo "--- 正在准备打包环境 ---"
-
 echo "--- 检查 out 目录是否存在 ---"
 ls -ld out
 
@@ -73,31 +72,13 @@ cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
 if [ "$ENABLE_SUKISU" = "true" ]; then
-    echo "--- [SukiSU Mode] 正在下载并运行 patch_linux (KPM Enabled) ---"
-    wget -O patch_linux "https://github.com/SukiSU-Ultra/SukiSU_patch/raw/refs/heads/main/kpm/patch_linux"
-    if [ $? -ne 0 ]; then
-        echo "错误: 下载 patch_linux 失败！"
-        exit 1
-    fi
-
-    echo "--- 正在运行 patch_linux ---"
-    chmod +x ./patch_linux && ./patch_linux
-    
-    if [ -f oImage ]; then
-        mv oImage zImage
-    fi
-    
-    rm -f Image oImage patch_linux
-    echo "--- patch_linux 执行完毕, 已生成 zImage ---"
-
-elif [ "$ENABLE_RESUKISU" = "true" ]; then
-    echo "--- [ReSukiSU Mode] 当前未启用 KPM, 跳过 patch_linux ---"
-    echo "--- 正在重命名 Image -> zImage ---"
+    echo "--- [SukiSU Mode] 正在重命名 Image -> zImage ---"
     mv Image zImage
-
+elif [ "$ENABLE_RESUKISU" = "true" ]; then
+    echo "--- [ReSukiSU Mode] 正在重命名 Image -> zImage ---"
+    mv Image zImage
 else
-    echo "--- [Original Mode] 原版内核, 跳过 patch_linux ---"
-    echo "--- 正在重命名 Image -> zImage ---"
+    echo "--- [Original Mode] 正在重命名 Image -> zImage ---"
     mv Image zImage
 fi
 
