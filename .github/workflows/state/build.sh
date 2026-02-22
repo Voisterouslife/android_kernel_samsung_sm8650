@@ -71,8 +71,8 @@ fi
 cp arch/arm64/boot/Image AnyKernel3/Image
 cd AnyKernel3
 
-if [ "$ENABLE_SUKISUULTRA" = "true" ]; then
-    echo "--- [SukiSU Mode] 正在重命名 Image -> zImage ---"
+if [ "$ENABLE_SUKISU_ULTRA" = "true" ]; then
+    echo "--- [SukiSU-Ultra Mode] 正在重命名 Image -> zImage ---"
     mv Image zImage
 elif [ "$ENABLE_RESUKISU" = "true" ]; then
     echo "--- [ReSukiSU Mode] 正在重命名 Image -> zImage ---"
