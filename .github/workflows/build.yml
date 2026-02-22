@@ -28,7 +28,7 @@ jobs:
             name: "Original"
 
           - branch: "SukiSUUltra"
-            name: "SukiSU"
+            name: "SukiSU-Ultra"
             enable_sukisuultra: "true"
 
           - branch: "SukiSU"
@@ -90,7 +90,7 @@ jobs:
           ccache -M 15G
           ccache -z 
 
-      - name: Download and install SukiSU
+      - name: Download and install SukiSU-Ultra
         if: matrix.enable_sukisuultra == 'true'
         run: |
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s builtin
@@ -106,7 +106,7 @@ jobs:
 
       - name: Run kernel build script
         env:
-          ENABLE_SUKISUUltra: ${{ matrix.enable_sukisuultra }}
+          ENABLE_SUKISU_ULTRA: ${{ matrix.enable_sukisuultra }}
           ENABLE_RESUKISU: ${{ matrix.enable_resukisu }}
         run: |
           SCRIPT_PATH=".github/workflows/state/build.sh"
@@ -167,7 +167,7 @@ jobs:
             
             本 Release 包含以下多个版本的内核镜像及刷机包，请根据文件前缀按需下载：
             - **【Original】**: 原版内核
-            - **【SukiSUUltra】**: 集成 SukiSUUltra
+            - **【SukiSU-Ultra】**: 集成 SukiSU-Ultra
             - **【ReSukiSU】**: 集成 ReSukiSU
             
             *默认均已集成 Baseband-guard 支持。*
