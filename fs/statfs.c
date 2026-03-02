@@ -12,7 +12,7 @@
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #include <linux/susfs_def.h>
 #include "mount.h"
-#endif
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #include "internal.h"
 
 static int flags_by_mnt(int mnt_flags)
@@ -94,7 +94,7 @@ int vfs_statfs(const struct path *path, struct kstatfs *buf)
 	struct mount *mnt;
 
 	mnt = real_mount(path->mnt);
-	if (likely(susfs_is_current_proc_umounted())) {
+	if (likely(susfs_is_current_proc_umounted_app())) {
 		for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
 	}
 	error = statfs_by_dentry(mnt->mnt.mnt_root, buf);
@@ -106,7 +106,7 @@ int vfs_statfs(const struct path *path, struct kstatfs *buf)
 	if (!error)
 		buf->f_flags = calculate_f_flags(path->mnt);
 	return error;
-#endif
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 }
 EXPORT_SYMBOL(vfs_statfs);
 

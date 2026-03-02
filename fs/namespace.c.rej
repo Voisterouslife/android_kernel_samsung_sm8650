@@ -1,6 +1,6 @@
 --- fs/namespace.c
 +++ fs/namespace.c
-@@ -32,10 +32,22 @@
+@@ -32,10 +32,21 @@
  #include <linux/fs_context.h>
  #include <linux/shmem_fs.h>
  #include <linux/mnt_idmapping.h>
@@ -13,9 +13,8 @@
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +extern bool susfs_is_current_ksu_domain(void);
++extern bool susfs_is_current_zygote_domain(void);
 +extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
-+
-+static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
 +
 +#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
@@ -23,13 +22,13 @@
  /* Maximum number of mounts in a mount namespace */
  static unsigned int sysctl_mount_max __read_mostly = 100000;
  
-@@ -3679,6 +3875,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3697,6 +3890,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	copy_flags |= CL_COPY_MNT_NS;
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
