@@ -4,7 +4,7 @@
  #include <linux/cn_proc.h>
  #include <linux/cpufreq_times.h>
  #include <linux/dma-buf.h>
-+#ifdef CONFIG_KSU_SUSFS_SUS_MAP
++#if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)
 +#include <linux/susfs_def.h>
 +#endif
 +
