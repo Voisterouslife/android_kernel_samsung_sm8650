@@ -9,8 +9,8 @@
 /* shared with userspace ksu_susfs tool */
 #define SUSFS_MAGIC 0xFAFAFAFA
 #define CMD_SUSFS_ADD_SUS_PATH 0x55550
-#define CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH 0x55551
-#define CMD_SUSFS_SET_SDCARD_ROOT_PATH 0x55552
+#define CMD_SUSFS_SET_ANDROID_DATA_ROOT_PATH 0x55551 /* deprecated */
+#define CMD_SUSFS_SET_SDCARD_ROOT_PATH 0x55552 /* deprecated */
 #define CMD_SUSFS_ADD_SUS_PATH_LOOP 0x55553
 #define CMD_SUSFS_ADD_SUS_MOUNT 0x55560 /* deprecated */
 #define CMD_SUSFS_HIDE_SUS_MNTS_FOR_NON_SU_PROCS 0x55561
@@ -41,7 +41,7 @@
 #define TRY_UMOUNT_DEFAULT 0 /* used by susfs_try_umount() */
 #define TRY_UMOUNT_DETACH 1 /* used by susfs_try_umount() */
 
-#define DEFAULT_UNSHARE_KSU_MNT_ID 400000 /* used for mounts unshared by ksu process */
+#define VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT 0x80000000 /* used for mounts that are unshared by ksu process */
 #define DEFAULT_KSU_MNT_ID 500000 /* used for mounts created or single cloned by ksu process */
 #define DEFAULT_KSU_MNT_GROUP_ID 5000 /* used by mount->mnt_group_id */
 
