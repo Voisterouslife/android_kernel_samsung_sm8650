@@ -30,7 +30,10 @@
 #include "mount.h"
 
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-extern void susfs_sus_ino_for_generic_fillattr(unsigned long ino, struct kstat *stat);
+extern void susfs_generic_fillattr_spoofer(struct inode *inode, struct kstat *stat);
+#endif
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern int susfs_get_non_sus_mnt_id_from_mnt(struct mount *orig_mnt);
 #endif
 
 /**
@@ -52,19 +55,6 @@ extern void susfs_sus_ino_for_generic_fillattr(unsigned long ino, struct kstat *
 void generic_fillattr(struct user_namespace *mnt_userns, struct inode *inode,
 		      struct kstat *stat)
 {
-#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-	if (inode->i_mapping &&
-		unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) &&
-		likely(susfs_is_current_proc_umounted_app()))
-	{
-		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
-		stat->mode = inode->i_mode;
-		stat->rdev = inode->i_rdev;
-		stat->uid = i_uid_into_mnt(mnt_userns, inode);
-		stat->gid = i_gid_into_mnt(mnt_userns, inode);
-		return;
-	}
-#endif
 	stat->dev = inode->i_sb->s_dev;
 	stat->ino = inode->i_ino;
 	stat->mode = inode->i_mode;
@@ -78,6 +68,9 @@ void generic_fillattr(struct user_namespace *mnt_userns, struct inode *inode,
 	stat->ctime = inode->i_ctime;
 	stat->blksize = i_blocksize(inode);
 	stat->blocks = inode->i_blocks;
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	susfs_generic_fillattr_spoofer(inode, stat);
+#endif
 }
 EXPORT_SYMBOL(generic_fillattr);
 
@@ -142,8 +135,18 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 
 	mnt_userns = mnt_user_ns(path->mnt);
 	if (inode->i_op->getattr)
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	{
+		int err = inode->i_op->getattr(mnt_userns, path, stat,
+					    request_mask, query_flags);
+		if (!err)
+			susfs_generic_fillattr_spoofer(inode, stat);
+		return err;
+	}
+#else
 		return inode->i_op->getattr(mnt_userns, path, stat,
 					    request_mask, query_flags);
+#endif
 
 	generic_fillattr(mnt_userns, inode, stat);
 	return 0;
@@ -287,7 +290,16 @@ retry:
 
 	error = vfs_getattr(&path, stat, request_mask, flags);
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (real_mount(path.mnt)->mnt_id >= DEFAULT_KSU_MNT_ID &&
+		likely(susfs_is_current_proc_umounted_app()))
+		stat->mnt_id = susfs_get_non_sus_mnt_id_from_mnt(real_mount(path.mnt));
+	else
+		stat->mnt_id = real_mount(path.mnt)->mnt_id;
+#else
 	stat->mnt_id = real_mount(path.mnt)->mnt_id;
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+
 	stat->result_mask |= STATX_MNT_ID;
 
 	if (path.mnt->mnt_root == path.dentry)
