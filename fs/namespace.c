@@ -46,12 +46,9 @@
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 extern bool susfs_is_current_ksu_domain(void);
-extern struct static_key_false susfs_set_sdcard_android_data_decrypted_key_false;
+extern struct static_key_true susfs_is_sdcard_android_data_not_decrypted;
 
 #define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
-
-static DEFINE_IDA(susfs_mnt_id_ida);
-static DEFINE_IDA(susfs_mnt_group_ida);
 
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
@@ -218,14 +215,8 @@ static int mnt_alloc_id(struct mount *mnt)
 static void mnt_free_id(struct mount *mnt)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
-		ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
+	if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT)
 		return;
-	}
-
-	if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
-		return;
-	}
 
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	ida_free(&mnt_id_ida, mnt->mnt_id);
@@ -246,7 +237,7 @@ static int mnt_alloc_group_id(struct mount *mnt)
 	 *   another ida nor hook the mnt_release_group_id() function.
 	 */
 	if (susfs_is_current_ksu_domain()) {
-		res = ida_alloc_min(&susfs_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
+		res = ida_alloc_min(&mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
 		goto bypass_orig_flow;
 	}
 
@@ -267,13 +258,6 @@ bypass_orig_flow:
  */
 void mnt_release_group_id(struct mount *mnt)
 {
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (mnt->mnt_group_id >= DEFAULT_KSU_MNT_GROUP_ID) {
-		ida_free(&susfs_mnt_group_ida, mnt->mnt_group_id);
-		mnt->mnt_group_id = 0;
-		return;
-	}
-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	ida_free(&mnt_group_ida, mnt->mnt_group_id);
 	mnt->mnt_group_id = 0;
 }
@@ -373,10 +357,10 @@ static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name)
 	int res;
 
 	if (mnt) {
-		res = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);;
-		if (res < 0) {
+		res = ida_alloc_min(&mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+		if (res < 0)
 			goto out_free_cache;
-		}
+
 		mnt->mnt_id = res;
 
 		if (name) {
@@ -1309,7 +1293,7 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	// - We will just stop checking for ksu process if /sdcard/Android is accessible,
 	//   for the sake of performance
-	if (static_branch_unlikely(&susfs_set_sdcard_android_data_decrypted_key_false)) {
+	if (static_branch_unlikely(&susfs_is_sdcard_android_data_not_decrypted)) {
 		if (susfs_is_current_ksu_domain()) {
 			mnt = susfs_alloc_non_unshare_ksu_vfsmnt(fc->source ?: "none");
 			goto bypass_orig_flow;
@@ -1442,7 +1426,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 
 	// - We will just stop checking for ksu process if /sdcard/Android is accessible,
 	//   for the sake of performance
-	if (static_branch_unlikely(&susfs_set_sdcard_android_data_decrypted_key_false)) {
+	if (static_branch_unlikely(&susfs_is_sdcard_android_data_not_decrypted)) {
 		// - If /sdcard/Android is still not accessible, we keep checking for mounts
 		//   mounted by ksu process
 		if (susfs_is_current_ksu_domain()) {
@@ -1507,9 +1491,8 @@ bypass_orig_flow:
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (unlikely(is_mnt_ksu_unshared)) {
+	if (unlikely(is_mnt_ksu_unshared))
 		mnt->mnt.mnt_flags |= VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT;
-	}
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 	atomic_inc(&sb->s_active);
