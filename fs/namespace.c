@@ -4117,7 +4117,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	if (user_ns != ns->user_ns)
 		copy_flags |= CL_SHARED_TO_SLAVE;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	copy_flags |= CL_COPY_MNT_NS;ss
+	copy_flags |= CL_COPY_MNT_NS
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #ifdef CONFIG_KDP_NS
 	new = copy_tree(old, ((struct kdp_mount *)old)->mnt->mnt_root, copy_flags);
