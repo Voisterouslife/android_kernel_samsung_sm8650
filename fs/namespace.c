@@ -35,7 +35,6 @@
 #ifdef CONFIG_KSU_SUSFS
 #include <linux/susfs_def.h>
 #endif // #ifdef CONFIG_KSU_SUSFS
- 
 #include <linux/fslog.h>
 #ifdef CONFIG_KDP_NS
 #include <linux/kdp.h>
